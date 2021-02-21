@@ -1,42 +1,47 @@
 { open Parser }
 
+let digit = ['0' - '9']
+let digits = digit+
+
 rule token = parse
 (* ignored *)
   [' ' '\t' '\r' '\n']  { token lexbuf }
   | "//"                  { linecomment lexbuf }
   | "/*"                  { multicomment lexbuf }
 (* blocking *)  
-  | '('                   { OPENPAREN }
-  | ')'                   { CLOSEPAREN }
-  | '{'                   { OPENBRACE }
-  | '}'                   { CLOSEBRACE }
-  | '['                   { OPENSQUARE }
-  | ']'                   { CLOSESQAURE }
-  | ';'                   { SEMICOLON }
+  | '('                   { LPAREN }
+  | ')'                   { RPAREN }
+  | '{'                   { LBRACE }
+  | '}'                   { RBRACE }
+  | '['                   { LSQUARE }
+  | ']'                   { RSQUARE }
+  | ';'                   { SEMI }
   | ':'                   { COLON }
   | ','                   { COMMA }
 (* operators *)
-  | '='                   { ASSIGN }
-  | '!'                   { NEGATE }
   | '+'                   { PLUS }
   | '-'                   { MINUS }
   | '*'                   { TIMES }
   | '/'                   { DIVIDE }
-  | "=="                  { EQUALS }
+  | '='                   { ASSIGN }
+  | "=="                  { EQ }
+  | "!="                  { NEQ }
   | '.'                   { DOT }
-  (* potential issue with using these (<, >) for node/graph/lists/tuples? *)
-  | '<'                   { OPENANGLE }
-  | '>'                   { CLOSEANGLE }
-  | "<="                  { LESSEQ }
-  | ">="                  { GREATEREQ }
-  | "||"                  { OR }
+(* potential issue with using these (<, >) for node/graph/lists/tuples? *)
+  | '<'                   { LT }
+  | '>'                   { GT }
+  | "<="                  { LEQ }
+  | ">="                  { GEQ }
   | "&&"                  { AND }
-  | '~'                   { TILDE }
-  | ">>"                  { DIRECTION }
+  | "||"                  { OR }
+  | "!"                   { NOT }
+(* graph tokens *)
+  | "~>>"                 { DIR1 }
+  | "~~"                  { UNDIR1 }
 (* keywords *)
   | "void"                { VOID }
   | "int"                 { INT }
-  | "double"              { DOUBLE }
+  | "float"               { FLOAT }
   | "bool"                { BOOL }
   | "string"              { STRING }
   | "graph"               { GRAPH }
@@ -51,13 +56,12 @@ rule token = parse
   | "continue"            { CONTINUE }
   | "break"               { BREAK }
 (* literals *)
-  | "true"                { BOOLLIT(true) }
-  | "false"               { BOOLLIT(false) }
-  | '\"' ([^'\"']* as str) '\"' { STRINGLIT(str) }
-  | ('0'|['1'-'9']['0'-'9']*) as num  { INTLIT(num) }
-  | (('0'|['1'-'9']['0'-'9']*) '.' ['0'-'9']+) as num { DOUBLELIT(num) }
-  (* this is assuming variable names must start with lowercase *)
-  | (['a'-'z']['a'-'z' 'A'-'Z' '_']*) as name { ID(name) } 
+  | "true"                { BLIT(true) }
+  | "false"               { BLIT(false) }
+  | '\"' ([^'\"']* as str) '\"' { SLIT(str) }
+  | digits as lxm { LITERAL(int_of_string lxm) }
+  | (('0'|['1'-'9']['0'-'9']*) '.' ['0'-'9']+) as num { DLIT(num) }
+  | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*     as lxm { ID(lxm) }
 
   and linecomment = parse
     '\n'                  { token lexbuf }
