@@ -35,7 +35,6 @@ rule token = parse
   | "!"                   { NOT }
 (* graph tokens *)
   | "~>>"                 { DIREDGE }
-  | ">>"                  { DOUBLEGEQ }
   | "~~"                  { UNDIREDGE }
   | "~"                   { TILDE }
 

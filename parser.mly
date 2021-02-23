@@ -5,7 +5,7 @@
 %{ open Ast %}
 
 %token SEMI LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE COMMA PLUS MINUS TIMES DIVIDE ASSIGN DOT
-%token NOT EQ NEQ LT LEQ GT GEQ AND OR
+%token NOT EQ NEQ LT LEQ GT GEQ AND OR TILDE DIREDGE UNDIREDGE
 %token RETURN IF ELSE FOR WHILE INT FLOAT STRING GRAPH NODE LIST TUPLE VOID
 %token <int> LITERAL
 %token <float> FLIT
@@ -106,8 +106,12 @@ expr:
   | MINUS expr %prec NOT { Unop(Neg, $2) }
   | NOT expr { Unop(Not, $2) }
   | ID ASSIGN expr { Assign($1, $3) }
-  | ID LPAREN args_opt RPAREN { Call($1, $3) }
+  | literal LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
+  | ID UNDIREDGE ID { UndirEdge ($1, $3) }
+  | ID TILDE literal TILDE ID { UndirEdgeCustom ($1, $3, $5) }
+  | ID DIREDGE ID { DirEdge ($1, $3) }
+  | ID TILDE literal DIREDGE ID { DirEdgeCustom ($1, $3, $5) }
 
 literal:
     ID { Id($1) }
