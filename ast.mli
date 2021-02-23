@@ -1,24 +1,23 @@
 type unop =
     Not 
-  | Negative
+  | Neg
 
 type binop =
     Add
   | Sub
-  | Multiply
-  | Divide
-  | Equals
+  | Mult
+  | Div
+  | Eq
   | And
   | Or
   | Greater
   | Less
-  | GreaterEqual
-  | LessEqual
+  | Geq
+  | Leq
 
 type ptype = 
     Int
   | String
-  | Bool
   | Float
   | Void
   
