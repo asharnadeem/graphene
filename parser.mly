@@ -71,7 +71,7 @@ vdecl_list:
 
 vdecl:
     typ ID SEMI { ($1, $2) }
-    | typ ID LPAREN expr COMMA expr RPAREN SEMI { NodeLit($1, $4, $6) }
+    | typ ID LBRACE expr COMMA expr RBRACE SEMI { NodeLit($1, $4, $6) }
 
 stmt_list:
     /* nothing */   { [] }
@@ -115,7 +115,7 @@ expr:
   | ID TILDE LPAREN literal RPAREN TILDE ID { UndirEdgeCustom($1, $4, $7) }
   | ID DIREDGE ID { DirEdge($1, $3) }
   | ID TILDE LPAREN literal RPAREN DIREDGE ID { DirEdgeCustom($1, $4, $7) }
-  | ID DOT ID { Method($1, $3) }
+  | ID DOT ID LPAREN args_opt RPAREN { Method($1, $3) }
   | ID LSQUARE expr RSQUARE { Index($1, $3) }
   | LSQUARE args_opt RSQUARE { ArrayLit($2) }
   /* | LPAREN edge_list RPAREN { GraphLit($2) } Design Choice: If we need this, we can add it back*/
