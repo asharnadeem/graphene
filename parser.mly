@@ -71,6 +71,7 @@ vdecl_list:
 
 vdecl:
     typ ID SEMI { ($1, $2) }
+    | typ ID LPAREN expr COMMA expr RPAREN SEMI { NodeLit($1, $4, $6) }
 
 stmt_list:
     /* nothing */   { [] }
