@@ -50,6 +50,7 @@ rule token = parse
   | "if"                  { IF }
   | "else"                { ELSE }
   | "for"                 { FOR }
+  | "foreach"             { FOREACH }
   | "while"               { WHILE }
   | "return"              { RETURN }
   | "continue"            { CONTINUE }
