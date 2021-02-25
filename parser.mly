@@ -4,7 +4,7 @@
 
 %{ open Ast %}
 
-%token SEMI COLON LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE COMMA PLUS MINUS TIMES DIVIDE ASSIGN DOT
+%token SEMI COLON LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE COMMA PLUS MINUS TIMES DIVIDE MOD ASSIGN DOT
 %token NOT EQ NEQ LT LEQ GT GEQ AND OR TILDE DIREDGE UNDIREDGE
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE INT FLOAT STRING GRAPH NODE LIST TUPLE VOID
 %token <int> LITERAL
@@ -24,7 +24,7 @@
 %left EQ NEQ
 %left LT GT LEQ GEQ
 %left PLUS MINUS
-%left TIMES DIVIDE
+%left TIMES DIVIDE MOD
 %right NOT
 
 %%
@@ -38,7 +38,6 @@ decls:
   | decls fdecl { (fst $1, ($2 :: snd $1)) }
 
 fdecl:
-
   typ ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
     { {typ = $1; 
       fname = $2;
@@ -85,7 +84,7 @@ stmt:
   | LBRACE stmt_list RBRACE { Block(List.rev $2) }
   | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
   | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) }
-  | FOR LPAREN expr_opt SEMI expr SEMI expr_opt RPAREN stmt { For($3, $5, $7, $9) }
+  | FOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt { For($3, $5, $7, $9) }
   | FOREACH LPAREN typ ID COLON expr RPAREN stmt { For($3, $4, $6, $8) }
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
 
@@ -99,6 +98,7 @@ expr:
   | expr MINUS expr { Binop($1, Sub, $3) }
   | expr TIMES expr { Binop($1, Mul, $3) }
   | expr DIVIDE expr { Binop($1, Div, $3) }
+  | expr MOD expr { Binop($1, Mod, $3) }
   | expr EQ expr { Binop($1, Eq, $3) }
   | expr LT expr { Binop($1, Less, $3) }
   | expr GT expr { Binop($1, Greater, $3) }
@@ -109,7 +109,7 @@ expr:
   | MINUS expr %prec NOT { Unop(Neg, $2) }
   | NOT expr { Unop(Not, $2) }
   | ID ASSIGN expr { Assign($1, $3) }
-  | literal LPAREN args_opt RPAREN { Call($1, $3) }
+  | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
   | ID UNDIREDGE ID { UndirEdge($1, $3) }
   | ID TILDE LPAREN literal RPAREN TILDE ID { UndirEdgeCustom($1, $4, $7) }
