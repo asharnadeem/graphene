@@ -36,6 +36,7 @@ rule token = parse
   | "!"                   { NOT }
 (* graph tokens *)
   | "~>>"                 { DIREDGE }
+  | ">>"                  { DGT }
   | "~~"                  { UNDIREDGE }
   | "~"                   { TILDE }
 
@@ -47,7 +48,6 @@ rule token = parse
   | "graph"               { GRAPH }
   | "node"                { NODE }
   | "list"                { LIST }
-  | "tuple"               { TUPLE }
   | "if"                  { IF }
   | "else"                { ELSE }
   | "for"                 { FOR }

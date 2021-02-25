@@ -4,9 +4,11 @@
 
 %{ open Ast %}
 
-%token SEMI COLON LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE COMMA PLUS MINUS TIMES DIVIDE MOD ASSIGN DOT
-%token NOT EQ NEQ LT LEQ GT GEQ AND OR TILDE DIREDGE UNDIREDGE
-%token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE INT FLOAT STRING GRAPH NODE LIST TUPLE VOID
+%token LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE COMMA SEMI COLON DOT
+%token PLUS MINUS TIMES DIVIDE MOD ASSIGN NOT EQ NEQ LT LEQ GT GEQ AND OR
+%token TILDE DIREDGE UNDIREDGE DGT
+%token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
+%token INT FLOAT STRING GRAPH NODE LIST VOID
 %token <int> LITERAL
 %token <float> FLIT
 %token <string> SLIT
@@ -61,7 +63,6 @@ typ:
   | GRAPH LT typ GT  { Graph($3) }
   | NODE  LT typ GT { Node($3) }
   | LIST  LT typ GT { List($3) }
-  | TUPLE LT GT { Tuple }
   | VOID   { Void }
 
 vdecl_list:
@@ -82,9 +83,10 @@ stmt:
   | CONTINUE SEMI { Continue }
   | BREAK SEMI { Break }
   | LBRACE stmt_list RBRACE { Block(List.rev $2) }
-  | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
   | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) }
-  | FOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt { For($3, $5, $7, $9) }
+  | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
+  | FOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt 
+                                                        { For($3, $5, $7, $9) }
   | FOREACH LPAREN typ ID COLON expr RPAREN stmt { For($3, $4, $6, $8) }
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
 
@@ -109,16 +111,22 @@ expr:
   | MINUS expr %prec NOT { Unop(Neg, $2) }
   | NOT expr { Unop(Not, $2) }
   | ID ASSIGN expr { Assign($1, $3) }
-  | ID LPAREN args_opt RPAREN { Call($1, $3) }
+  | ID LPAREN args_opt RPAREN { FunctionCall($1, $3) }
   | LPAREN expr RPAREN { $2 }
+  /* nodeA ~~ nodeB */
   | ID UNDIREDGE ID { UndirEdge($1, $3) }
+  /* nodeA ~(5)~ nodeB */
   | ID TILDE LPAREN literal RPAREN TILDE ID { UndirEdgeCustom($1, $4, $7) }
+  /* nodeA ~>> nodeB */
   | ID DIREDGE ID { DirEdge($1, $3) }
-  | ID TILDE LPAREN literal RPAREN DIREDGE ID { DirEdgeCustom($1, $4, $7) }
+  /* nodeA ~(5)>> nodeB */
+  | ID TILDE LPAREN literal RPAREN DGT ID { DirEdgeCustom($1, $4, $7) }
+  /* graph.getNode(key) */
   | ID DOT ID LPAREN args_opt RPAREN { Method($1, $3) }
+  /* queue[3] */
   | ID LSQUARE expr RSQUARE { Index($1, $3) }
-  | LSQUARE args_opt RSQUARE { ArrayLit($2) }
-  /* | LPAREN edge_list RPAREN { GraphLit($2) } Design Choice: If we need this, we can add it back*/
+  /* [1,2,3,4,5] */
+  | LSQUARE args_opt RSQUARE { ListLit($2) }
 
 literal:
     ID { Id($1) }
@@ -133,11 +141,3 @@ args_opt:
 args_list:
     expr { [$1] }
   | args_list COMMA expr { $3 :: $1 }
-
-/* Left out due to design choice
-edge_list:
-    edge_lit { [$1] }
-  | edge_list COMMA edge_lit { $3 :: $1 }
-
-edge_lit:
-  LBRACE expr COMMA expr RBRACE { EdgeLit($2, $4) } */
