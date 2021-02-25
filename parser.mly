@@ -8,7 +8,7 @@
 %token PLUS MINUS TIMES DIVIDE MOD ASSIGN NOT EQ NEQ LT LEQ GT GEQ AND OR
 %token TILDE DIREDGE UNDIREDGE DGT
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
-%token INT FLOAT STRING GRAPH NODE LIST VOID
+%token INT FLOAT STRING GRAPH NODE EDGE LIST VOID
 %token <int> LITERAL
 %token <float> FLIT
 %token <string> SLIT
@@ -62,6 +62,7 @@ typ:
   | STRING { String }
   | GRAPH LT typ GT  { Graph($3) }
   | NODE  LT typ GT { Node($3) }
+  | EDGE  LT typ GT { Edge($3) }
   | LIST  LT typ GT { List($3) }
   | VOID   { Void }
 

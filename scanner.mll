@@ -47,6 +47,7 @@ rule token = parse
   | "string"              { STRING }
   | "graph"               { GRAPH }
   | "node"                { NODE }
+  | "edge"                { EDGE }
   | "list"                { LIST }
   | "if"                  { IF }
   | "else"                { ELSE }
