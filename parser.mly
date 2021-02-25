@@ -122,6 +122,8 @@ expr:
   | ID DIREDGE ID { DirEdge($1, $3) }
   /* nodeA ~(5)>> nodeB */
   | ID TILDE LPAREN literal RPAREN DGT ID { DirEdgeCustom($1, $4, $7) }
+  /* node.id */
+  | ID DOT ID { Access($1, $3) }
   /* graph.getNode(key) */
   | ID DOT ID LPAREN args_opt RPAREN { Method($1, $3) }
   /* queue[3] */
