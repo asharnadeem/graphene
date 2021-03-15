@@ -40,12 +40,11 @@ decls:
   | decls fdecl { (fst $1, ($2 :: snd $1)) }
 
 fdecl:
-  typ ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
+  typ ID LPAREN formals_opt RPAREN LBRACE stmt_list RBRACE
     { {typ = $1; 
       fname = $2;
       formals = $4;
-      locals = $7;
-      body = $8;
+      body = $7;
     } }
 
 formals_opt:
@@ -66,12 +65,10 @@ typ:
   | LIST  LT typ GT { List($3) }
   | VOID   { Void }
 
-vdecl_list:
-    /* nothing */  { [] }
-
 vdecl:
-    typ ID SEMI { ($1, $2) }
-    | typ ID LBRACE expr COMMA expr RBRACE SEMI { NodeLit($1, $4, $6) }
+    typ ID SEMI { Declare($1, $2, Noexpr) }
+  | typ ID LBRACE expr COMMA expr RBRACE SEMI { NodeLit($1, $4, $6) }
+  | typ ID ASSIGN expr SEMI { Declare($1, $2, Assign($2, $4)) } 
 
 stmt_list:
     /* nothing */   { [] }
@@ -89,6 +86,7 @@ stmt:
                                                         { For($3, $5, $7, $9) }
   | FOREACH LPAREN typ ID COLON expr RPAREN stmt { For($3, $4, $6, $8) }
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
+  | vdecl { $1 } 
 
 expr_opt:
     /* nothing */ { Noexpr }
