@@ -50,6 +50,8 @@ type expr =
   | Index of string * expr
   | Noexpr
 
+type bind = typ * string
+
 type stmt = 
     Expr of expr
   | Block of stmt list
@@ -60,9 +62,8 @@ type stmt =
   | While of expr * stmt
   | Continue
   | Break
-  | Declare of typ * string * expr
+  (*| Declare of typ * string * expr*)
 
-type bind = typ * string
 
 type func_decl = {
     typ : typ;
@@ -136,13 +137,16 @@ let rec string_of_stmt = function
   | For(e1, e2, e3, s) -> 
       "for (" ^ string_of_expr e1 ^ " ; " ^ string_of_expr e2 ^ " ; " ^
       string_of_expr e3 ^ ")" ^ string_of_stmt s
-(*  | Foreach(t, s, expr, stmt) -> *)
+(*  | Foreach(t, s, expr, stmt) -> 
+*)
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
   | Continue -> "continue;"
   | Break -> "break;"
-  | Declare(t, x, e) -> string_of_typ t ^ " " ^ x ^ " = " ^ string_of_expr e 
 
-let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ "\n;"
+(* | Declare(t, x, e) -> string_of_typ t ^ " " ^ x ^ " = " ^ string_of_expr e 
+*)
+
+let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
 let string_of_fdecl fdecl = 
   string_of_typ fdecl.typ ^ " " ^
@@ -153,3 +157,4 @@ let string_of_fdecl fdecl =
 let string_of_program (vars, funcs) = 
   String.concat "" (List.map string_of_vdecl vars) ^ "\n" ^
   String.concat "\n" (List.map string_of_fdecl funcs)
+

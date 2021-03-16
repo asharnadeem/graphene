@@ -4,8 +4,9 @@ let digit = ['0' - '9']
 let digits = digit+
 
 rule token = parse
+  | eof                   { EOF }
 (* ignored *)
-  [' ' '\t' '\r' '\n']  { token lexbuf }
+  | [' ' '\t' '\r' '\n']  { token lexbuf }
   | "//"                  { linecomment lexbuf }
   | "/*"                  { longcomment lexbuf }
 (* blocking *)  
@@ -60,7 +61,8 @@ rule token = parse
 (* literals *)
   | '\"' ([^'\"']* as str) '\"' { SLIT(str) }
   | digits as num { LITERAL(int_of_string num) }
-  | (('0'|['1'-'9']['0'-'9']*) '.' ['0'-'9']+) as num { FLIT(num) }
+(*  | (('0'|['1'-'9']['0'-'9']*) (* '.' ['0'-'9']+) as num { FLIT(num) }
+*)  
   | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*     as str { ID(str) }
 
   and linecomment = parse
