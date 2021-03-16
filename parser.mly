@@ -67,7 +67,7 @@ typ:
 
 vdecl:
     typ ID SEMI { Declare($1, $2, Noexpr) }
-  | typ ID LBRACE expr COMMA expr RBRACE SEMI { NodeLit($1, $4, $6) }
+/* remove? | typ ID LBRACE expr COMMA expr RBRACE SEMI { NodeLit($1, $4, $6) } */
   | typ ID ASSIGN expr SEMI { Declare($1, $2, Assign($2, $4)) } 
 
 stmt_list:
@@ -84,7 +84,7 @@ stmt:
   | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
   | FOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt 
                                                         { For($3, $5, $7, $9) }
-  | FOREACH LPAREN typ ID COLON expr RPAREN stmt { For($3, $4, $6, $8) }
+  | FOREACH LPAREN typ ID COLON expr RPAREN stmt { Foreach($3, $4, $6, $8) }
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
   | vdecl { $1 } 
 
@@ -109,30 +109,30 @@ expr:
   | MINUS expr %prec NOT { Unop(Neg, $2) }
   | NOT expr { Unop(Not, $2) }
   | ID ASSIGN expr { Assign($1, $3) }
-  | ID LPAREN args_opt RPAREN { FunctionCall($1, $3) }
+  | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
   /* nodeA ~~ nodeB */
-  | ID UNDIREDGE ID { UndirEdge($1, $3) }
+  | ID UNDIREDGE ID { UEdge($1, $3) }
   /* nodeA ~(5)~ nodeB */
-  | ID TILDE LPAREN literal RPAREN TILDE ID { UndirEdgeCustom($1, $4, $7) }
+  | ID TILDE LPAREN literal RPAREN TILDE ID { UEdgeC($1, $4, $7) }
   /* nodeA ~>> nodeB */
-  | ID DIREDGE ID { DirEdge($1, $3) }
+  | ID DIREDGE ID { DEdge($1, $3) }
   /* nodeA ~(5)>> nodeB */
-  | ID TILDE LPAREN literal RPAREN DGT ID { DirEdgeCustom($1, $4, $7) }
+  | ID TILDE LPAREN literal RPAREN DGT ID { DEdgeC($1, $4, $7) }
   /* node.id */
   | ID DOT ID { Access($1, $3) }
   /* graph.getNode(key) */
-  | ID DOT ID LPAREN args_opt RPAREN { Method($1, $3) }
+  | ID DOT ID LPAREN args_opt RPAREN { Call(Access($1, $3), $5) }
   /* queue[3] */
   | ID LSQUARE expr RSQUARE { Index($1, $3) }
   /* [1,2,3,4,5] */
-  | LSQUARE args_opt RSQUARE { ListLit($2) }
+ /* Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
 
 literal:
     ID { Id($1) }
-  | LITERAL { Literal($1) }
-  | FLIT { Float($1) }
-  | SLIT { String($1) }
+  | LITERAL { Ilit($1) }
+  | FLIT { Flit($1) }
+  | SLIT { Slit($1) }
 
 args_opt:
     /* nothing */ { [] }
