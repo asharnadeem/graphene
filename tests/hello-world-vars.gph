@@ -1,0 +1,5 @@
+string hw;
+int main() {
+  hw = "Hello World!");
+  print(hw); 
+}
