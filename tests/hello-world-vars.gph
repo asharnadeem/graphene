@@ -1,5 +1,15 @@
-string hw;
+int a;
+string b;
+float y;
+node<float> f;
+edge<int> i;
+graph<string> g;
+list<node<int> > l;
 int main() {
   hw = "Hello World!";
   print(hw); 
+}
+
+void test(int x) {
+  return;
 }
