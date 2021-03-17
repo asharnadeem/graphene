@@ -62,7 +62,7 @@ type stmt =
   | While of expr * stmt
   | Continue
   | Break
-  (*| Declare of typ * string * expr*)
+  | Declare of typ * string * expr
 
 
 type func_decl = {
@@ -142,9 +142,8 @@ let rec string_of_stmt = function
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
   | Continue -> "continue;"
   | Break -> "break;"
+  | Declare(t, x, e) -> string_of_typ t ^ " " ^ x ^ "; " ^ string_of_expr e ^ ";\n"
 
-(* | Declare(t, x, e) -> string_of_typ t ^ " " ^ x ^ " = " ^ string_of_expr e 
-*)
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 

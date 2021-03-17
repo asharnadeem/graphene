@@ -85,9 +85,9 @@ stmt:
 /*  | FOREACH LPAREN typ ID COLON expr RPAREN stmt { Foreach($3, $4, $6, $8) }
 */
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
-  /*| typ ID ASSIGN expr SEMI { Declare($1, $2, Assign($2, $4)) }
+  | typ ID ASSIGN expr SEMI { Declare($1, $2, Assign($2, $4)) }
   | typ ID SEMI { Declare($1, $2, Noexpr) }
-  */
+  
 
 expr_opt:
     /* nothing */ { Noexpr }
