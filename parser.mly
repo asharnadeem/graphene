@@ -1,6 +1,4 @@
 /* Ocamlyacc parser for Graphene */
-/* TODO: rules for accessing methods, are we going to support objects?
-         graph operators */
 
 %{ open Ast %}
 
@@ -10,7 +8,7 @@
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID
 %token <int> LITERAL
-%token <float> FLIT
+%token <string> FLIT
 %token <string> SLIT
 %token <string> ID
 %token EOF
@@ -18,8 +16,8 @@
 %start program
 %type <Ast.program> program
 
-%nonassoc ELSE
 %nonassoc NOELSE
+%nonassoc ELSE
 %right ASSIGN
 %left OR
 %left AND
@@ -80,8 +78,8 @@ stmt:
   | CONTINUE SEMI { Continue }
   | BREAK SEMI { Break }
   | LBRACE stmt_list RBRACE { Block(List.rev $2) }
-  | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) }
   | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
+  | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) }
   | FOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt 
                                                         { For($3, $5, $7, $9) }
 /*  | FOREACH LPAREN typ ID COLON expr RPAREN stmt { Foreach($3, $4, $6, $8) }
@@ -134,8 +132,7 @@ expr:
 literal:
     ID { Id($1) }
   | LITERAL { Ilit($1) }
-/*  | FLIT { Flit($1) }
-*/
+  | FLIT { Flit($1) }
   | SLIT { Slit($1) }
 
 args_opt:
