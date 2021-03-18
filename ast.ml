@@ -86,7 +86,7 @@ let string_of_binop = function
   | Mul -> "*"
   | Div -> "/"
   | Mod -> "%"
-  | Eq -> "="
+  | Eq -> "=="
   | And -> "&&"
   | Or -> "||"
   | Greater -> ">"

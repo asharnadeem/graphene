@@ -6,8 +6,15 @@ edge<int> i;
 graph<string> g;
 list<node<int> > l;
 int main() {
-  hw = "Hello World!";
-  print(hw); 
+  string hw = "Hello World!";
+  sprint(hw); 
+  int x = 1;
+  if(x == 0) {
+    sprint("again");
+  }
+  else {
+    sprint("not");
+  }
 }
 
 void test(int x) {
