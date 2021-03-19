@@ -1,10 +1,15 @@
-all : scanner.ml parser.ml parser.mli
+all : graphene.native printbig.o
 
-scanner.ml : scanner.mll
-	ocamllex $^
+test : all testall.sh
+	./testall.sh
 
-parser.ml parser.mli : parser.mly
-	ocamlyacc $^
+graphene.native :
+	opam config exec -- \
+	ocamlbuild -use-ocamlfind graphene.native
+
+printbig : printbig.c
+	cc -o printbig -DBUILD_TEST printbig.c
 
 clean :
-	rm -rf scanner.ml parser.ml parser.mli
+	ocamlbuild -clean
+	rm -rf testall.log ocamlllvm *.diff printbig.o

@@ -12,12 +12,12 @@ let check (globals, functions) =
   (* No void bindings or duplicate names *)
   let check_binds (kind : string) (binds: bind list) = 
     List.iter (function
-        (Void, b) -> raise (Failure ("illegal void"))
+        (Void, b) -> raise (Failure ("error: illegal void"))
       | _ -> ()) binds;
   
     let rec dups = function
         [] -> ()
-      | ((_,n1) :: (_,n2) :: _) when n1 = n2 -> raise(Failure ("duplicate"))
+      | ((_,n1) :: (_,n2) :: _) when n1 = n2 -> raise(Failure ("error: variable previously declared"))
       | _ :: t -> dups t
     in dups (List.sort (fun (_,a) (_,b) -> compare a b) binds)
   in check_binds "global" globals;
@@ -28,7 +28,7 @@ let check (globals, functions) =
       typ = Void;
       fname = name;
       formals = [(t, "x")];
-      body = [] } map
+      locals = []; body = [] } map
     in List.fold_left add_bind StringMap.empty [ 
       (* establish built-in functions *) ("iprint", Int);
       ("sprint", String);
@@ -41,7 +41,7 @@ let check (globals, functions) =
   (* adds unique function names to symbol table *)
   let add_func map fd = 
     let built_in_err = "function " ^ fd.fname ^ " may not be defined"
-    and dup_err = "duplicate function " ^ fd.fname
+    and dup_err = "error: function previously declared" ^ fd.fname
     and make_err er = raise (Failure er)
     and n = fd.fname
     in match fd with
@@ -56,7 +56,7 @@ let check (globals, functions) =
   (* Finds a function in the table *)
   let find_func s = 
     try StringMap.find s function_decls
-    with Not_found -> raise (Failure ("unrecognized function " ^ s))
+    with Not_found -> raise (Failure ("error: function never declared" ^ s))
   in
   
   (* Require main function for all programs *) 
@@ -65,27 +65,21 @@ let check (globals, functions) =
   let check_function func = 
     (* No duplicates in formals *)
     check_binds "formal" func.formals;
+    check_binds "local" func.locals;
     
     let check_assign lvaluet rvaluet err = 
       if lvaluet = rvaluet then lvaluet else raise (Failure err)
     in
-    (* Since we aren't using a locals list, find declarations in fcn *)
-    let rec concat_statements locals = function
-        [] -> locals
-      | h::t -> concat_statements (match h with 
-                                      Declare(t, x, e) -> (t, x) :: locals
-                                    | _ -> locals) t
-    in
 
     (* Local symbol table for function *)
     let symbols = List.fold_left (fun m (t, x) -> StringMap.add x t m) 
-      StringMap.empty (globals @ func.formals @ concat_statements [] func.body)
+      StringMap.empty (globals @ func.formals @ func.locals)
     in
 
     (* Gets symbols from table *)
     let type_of_identifier s = 
       try StringMap.find s symbols
-      with Not_found -> raise (Failure ("undeclared identifier " ^ s))
+      with Not_found -> raise (Failure ("error: variable never declared " ^ s))
     in 
 
     (* Checks expressions *)
@@ -114,25 +108,25 @@ let check (globals, functions) =
           | Less | Leq | Greater | Geq
                      when same && (t1 = Int || t1 = Float) -> Int
           | And | Or when same && t1 = Int -> Int
-          | _ -> raise (Failure("illegal binary operator" ^ 
+          | _ -> raise (Failure("error: illegal binary operator" ^ 
                         string_of_typ t1 ^ " " ^ string_of_binop o ^ " " ^
                         string_of_typ t2 ^ " in " ^ string_of_expr ex))
           in (ty, SBinop((t1,e1'), o, (t2, e2')))
       | Assign(x, e) as ex -> 
           let lt = type_of_identifier x
           and (rt, e') = expr e in
-          let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
+          let err = "error: illegal assignment " ^ string_of_typ lt ^ " = " ^
                     string_of_typ rt ^ " in " ^ string_of_expr ex
           in (check_assign lt rt err, SAssign(x, (rt, e')))
       | Call(f, el) as call -> 
           let fd = find_func f in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
-            raise (Failure ("expecting " ^ string_of_int param_length ^
+            raise (Failure ("error: expecting " ^ string_of_int param_length ^
                            " arguments in " ^ string_of_expr call))
           else let check_call (ft, _) e =
             let (et, e') = expr e in
-            let err = "illegal argument found " ^ string_of_typ et ^
+            let err = "error: illegal argument found " ^ string_of_typ et ^
               " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
             in (check_assign ft et err, e')
           in  
@@ -186,6 +180,7 @@ let check (globals, functions) =
     { styp = func.typ;
       sfname = func.fname;
       sformals = func.formals;
+      slocals  = func.locals;
       sbody = match check_stmt (Block func.body) with
         SBlock(sl) -> sl
         | _ -> raise (Failure ("internal error"))
