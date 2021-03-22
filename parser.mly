@@ -38,13 +38,12 @@ decls:
   | decls fdecl { (fst $1, ($2 :: snd $1)) }
 
 fdecl:
-   typ ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
-     { { typ = $1;
-	 fname = $2;
-	 formals = List.rev $4;
-	 locals = List.rev $7;
-	 body = List.rev $8 } }
-
+  typ ID LPAREN formals_opt RPAREN LBRACE stmt_list RBRACE
+    { {typ = $1; 
+      fname = $2;
+      formals = $4;
+      body = $7;
+    } }
 
 formals_opt:
     /* nothing */ { [] }
@@ -65,12 +64,10 @@ typ:
   | VOID   { Void }
 
 vdecl:
-   typ ID SEMI { ($1, $2) }
-
-vdecl_list:
-    /* nothing */    { [] }
-  | vdecl_list vdecl { $2 :: $1 }
-  
+    typ ID SEMI { ($1, $2) }
+/* remove? | typ ID LBRACE expr COMMA expr RBRACE SEMI { NodeLit($1, $4, $6) } */
+/*  | typ ID ASSIGN expr SEMI { bind($1, $2, Assign($2, $4)) } 
+*/
 stmt_list:
     /* nothing */   { [] }
   | stmt_list stmt  { $2 :: $1 }
@@ -88,8 +85,8 @@ stmt:
 /*  | FOREACH LPAREN typ ID COLON expr RPAREN stmt { Foreach($3, $4, $6, $8) }
 */
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
-  /* | typ ID ASSIGN expr SEMI { Declare($1, $2, Assign($2, $4)) } */
-  /* | typ ID SEMI { Declare($1, $2, Noexpr) } */
+  | typ ID ASSIGN expr SEMI { Declare($1, $2, Assign($2, $4)) }
+  | typ ID SEMI { Declare($1, $2, Noexpr) }
   
 
 expr_opt:
@@ -104,6 +101,7 @@ expr:
   | expr DIVIDE expr { Binop($1, Div, $3) }
   | expr MOD expr { Binop($1, Mod, $3) }
   | expr EQ expr { Binop($1, Eq, $3) }
+  | expr NEQ expr { Binop($1, Neq, $3) }
   | expr LT expr { Binop($1, Less, $3) }
   | expr GT expr { Binop($1, Greater, $3) }
   | expr LEQ expr { Binop($1, Leq, $3) }

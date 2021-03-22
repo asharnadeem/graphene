@@ -74,7 +74,15 @@ let translate (globals, functions) =
   
         let formals = List.fold_left2 add_formal StringMap.empty fdecl.sformals
             (Array.to_list (L.params the_function)) in
-        List.fold_left add_local formals fdecl.slocals 
+        let rec gather_locals locals = function
+            [] -> locals
+          | h::t -> gather_locals (match h with
+                        SDeclare(t, s, _) -> (t, s) :: locals
+                      | _ -> locals) t
+        in
+        let complete_locals = gather_locals [] fdecl.sbody
+        in
+        List.fold_left add_local formals complete_locals 
       in
   
       (* Return the value for a variable or formal argument.
@@ -196,6 +204,7 @@ let translate (globals, functions) =
         (* Implement for loops as while loops *)
         | SFor (e1, e2, e3, body) -> stmt builder
         ( SBlock [SExpr e1 ; SWhile (e2, SBlock [body ; SExpr e3]) ] )
+        | SDeclare(_, _, a) -> ignore(expr builder a); builder
       in
   
       (* Build the code for each statement in the function *)

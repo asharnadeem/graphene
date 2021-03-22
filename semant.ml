@@ -12,7 +12,8 @@ let check (globals, functions) =
   (* No void bindings or duplicate names *)
   let check_binds (kind : string) (binds: bind list) = 
     List.iter (function
-        (Void, b) -> raise (Failure ("error: illegal void"))
+        (Void, b) -> raise (Failure ("error: illegal void " ^ kind ^
+        " " ^ b))
       | _ -> ()) binds;
   
     let rec dups = function
@@ -28,7 +29,7 @@ let check (globals, functions) =
       typ = Void;
       fname = name;
       formals = [(t, "x")];
-      locals = []; body = [] } map
+      body = [] } map
     in List.fold_left add_bind StringMap.empty [ 
       (* establish built-in functions *) ("iprint", Int);
       ("sprint", String);
@@ -65,15 +66,21 @@ let check (globals, functions) =
   let check_function func = 
     (* No duplicates in formals *)
     check_binds "formal" func.formals;
-    check_binds "local" func.locals;
     
     let check_assign lvaluet rvaluet err = 
       if lvaluet = rvaluet then lvaluet else raise (Failure err)
     in
 
+    (* Since we aren't using locals, find declarations in fcn *)
+    let rec concat_statements locals = function
+        [] -> locals
+      | h::t -> concat_statements (match h with
+                    Declare(t, x, e) -> ignore e; (t, x) :: locals
+                  | _ -> locals) t
+    in
     (* Local symbol table for function *)
     let symbols = List.fold_left (fun m (t, x) -> StringMap.add x t m) 
-      StringMap.empty (globals @ func.formals @ func.locals)
+      StringMap.empty (globals @ func.formals @ concat_statements [] func.body)
     in
 
     (* Gets symbols from table *)
@@ -180,7 +187,6 @@ let check (globals, functions) =
     { styp = func.typ;
       sfname = func.fname;
       sformals = func.formals;
-      slocals  = func.locals;
       sbody = match check_stmt (Block func.body) with
         SBlock(sl) -> sl
         | _ -> raise (Failure ("internal error"))
