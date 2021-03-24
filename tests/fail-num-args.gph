@@ -1,0 +1,17 @@
+int helper(int a, int b){
+    
+    for(a; a < b; a = a + 1){
+        print(a);
+    }
+
+    return 0;
+}
+
+int main(){
+
+    int a = 5;
+    int b = 10;
+    int c = 15;
+    
+    return helper(a, b, c);
+}

@@ -1,6 +1,6 @@
-int main()
-{
+int main(){
+    
+    int a = 5 + 20;
     print(a);
-    a = 5 + 20;
-    int a;
+    return 0;
 }
