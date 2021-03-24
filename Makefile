@@ -1,7 +1,10 @@
 all : graphene.native printbig.o
 
 test : all testall.sh
-	./testall.sh -k
+	./testall.sh
+	rm -rf testall.log test-* fail-*
+
+test-clean: all testall.sh
 	rm -rf testall.log test-* fail-*
 
 graphene.native :
