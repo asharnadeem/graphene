@@ -42,7 +42,7 @@ fdecl:
     { {typ = $1; 
       fname = $2;
       formals = $4;
-      body = $7;
+      body = List.rev $7;
     } }
 
 formals_opt:
