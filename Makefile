@@ -1,7 +1,8 @@
 all : graphene.native printbig.o
 
 test : all testall.sh
-	./testall.sh
+	./testall.sh -k
+	rm -rf testall.log test-* fail-*
 
 graphene.native :
 	opam config exec -- \
@@ -12,4 +13,4 @@ printbig : printbig.c
 
 clean :
 	ocamlbuild -clean
-	rm -rf testall.log ocamlllvm *.diff printbig.o
+	rm -rf testall.log ocamlllvm *.diff printbig.o test-* fail-*

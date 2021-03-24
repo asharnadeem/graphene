@@ -14,6 +14,7 @@ let translate (globals, functions) =
 
   (* Get types from the context *)
   let i32_t      = L.i32_type    context
+  and i8_t       = L.i8_type     context
   and string_t   = L.pointer_type (L.i8_type context)
   and float_t    = L.double_type context
   and void_t     = L.void_type   context in
@@ -34,6 +35,16 @@ let translate (globals, functions) =
         | _ -> L.const_int (ltype_of_typ t) 0
       in StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
+
+  let printf_t : L.lltype = 
+      L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+  let printf_func : L.llvalue = 
+      L.declare_function "printf" printf_t the_module in
+
+  let printbig_t : L.lltype =
+      L.function_type i32_t [| i32_t |] in
+  let printbig_func : L.llvalue =
+      L.declare_function "printbig" printbig_t the_module in
 
   (* Define each function (arguments and return type) so we can 
      call it even before we've created its body *)
@@ -139,6 +150,14 @@ let translate (globals, functions) =
         A.Neg when t = A.Float -> L.build_fneg 
       | A.Neg                  -> L.build_neg
       | A.Not                  -> L.build_not) e' "tmp" builder
+      | SCall ("print", [e]) | SCall ("printb", [e]) ->
+	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
+	    "printf" builder
+      | SCall ("printbig", [e]) ->
+	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+      | SCall ("printf", [e]) -> 
+	  L.build_call printf_func [| float_format_str ; (expr builder e) |]
+	    "printf" builder
       | SCall (f, args) ->
            let (fdef, fdecl) = StringMap.find f function_decls in
      let llargs = List.rev (List.map (expr builder) (List.rev args)) in
@@ -154,7 +173,7 @@ let translate (globals, functions) =
        e.g., to handle the "fall off the end of the function" case. *)
        let add_terminal builder instr =
         match L.block_terminator (L.insertion_block builder) with
-    Some _ -> ()
+          Some _ -> ()
         | None -> ignore (instr builder) in
     
       (* Build the code for the given statement; return the builder for
@@ -166,7 +185,7 @@ let translate (globals, functions) =
         | SExpr e -> ignore(expr builder e); builder 
         | SReturn e -> ignore(match fdecl.styp with
                                 (* Special "return nothing" instr *)
-                                A.Void -> L.build_ret_void builder 
+                                A.Void -> L.build_ret_void builder
                                 (* Build return statement *)
                               | _ -> L.build_ret (expr builder e) builder );
                        builder
@@ -214,7 +233,7 @@ let translate (globals, functions) =
       add_terminal builder (match fdecl.styp with
           A.Void -> L.build_ret_void
         | A.Float -> L.build_ret (L.const_float float_t 0.0)
-        | t -> L.build_ret (L.const_int (ltype_of_typ t) 0))
+        | t -> L.build_ret (L.const_int (ltype_of_typ t) 0)) 
     in
 
   List.iter build_function_body functions;

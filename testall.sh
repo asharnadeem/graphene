@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Regression testing script for Graphene
+# Regression testing script for graphene
 # Step through a list of files
 #  Compile, run, and check the output of each expected-to-work test
 #  Compile and check the error of each expected-to-fail test
@@ -15,10 +15,10 @@ LLC="llc"
 # Path to the C compiler
 CC="cc"
 
-# Path to the graphne compiler.  Usually "./graphene.native"
+# Path to the graphene compiler.  Usually "./graphene.native"
 # Try "_build/graphene.native" if ocamlbuild was unable to create a symbolic link.
-GRAPHENE="./graphene.native"
-#GRAPHENE="_build/graphene.native"
+graphene="./graphene.native"
+#graphene="_build/graphene.native"
 
 # Set time limit for all operations
 ulimit -t 30
@@ -92,7 +92,7 @@ Check() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
-    Run "$GRAPHENE" "$1" ">" "${basename}.ll" &&
+    Run "$graphene" "$1" ">" "${basename}.ll" &&
     Run "$LLC" "-relocation-model=pic" "${basename}.ll" ">" "${basename}.s" &&
     Run "$CC" "-o" "${basename}.exe" "${basename}.s" "printbig.o" &&
     Run "./${basename}.exe" > "${basename}.out" &&
@@ -127,7 +127,7 @@ CheckFail() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
-    RunFail "$GRAPHENE" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
+    RunFail "$graphene" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
     Compare ${basename}.err ${reffile}.err ${basename}.diff
 
     # Report the status and clean up the generated files
@@ -176,7 +176,7 @@ if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="tests/pass-*.gph"
+    files="tests/test-*.gph tests/fail-*.gph"
 fi
 
 for file in $files
@@ -185,7 +185,7 @@ do
 	*test-*)
 	    Check $file 2>> $globallog
 	    ;;
-	*pass-*)
+	*fail-*)
 	    CheckFail $file 2>> $globallog
 	    ;;
 	*)

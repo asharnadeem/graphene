@@ -18,7 +18,7 @@ let check (globals, functions) =
   
     let rec dups = function
         [] -> ()
-      | ((_,n1) :: (_,n2) :: _) when n1 = n2 -> raise(Failure ("error: variable previously declared"))
+      | ((_,n1) :: (_,n2) :: _) when n1 = n2 -> raise(Failure ("error: variable previously declared: " ^ n1))
       | _ :: t -> dups t
     in dups (List.sort (fun (_,a) (_,b) -> compare a b) binds)
   in check_binds "global" globals;
@@ -30,13 +30,9 @@ let check (globals, functions) =
       fname = name;
       formals = [(t, "x")];
       body = [] } map
-    in List.fold_left add_bind StringMap.empty [ 
-      (* establish built-in functions *) ("iprint", Int);
-      ("sprint", String);
-      ("fprint", Float);
-      (* Need to suppport overloading to have a universal print *)
-      (* (Probably necessary anyways to support wrapper types) *)
-      ]
+      in List.fold_left add_bind StringMap.empty [ ("print", Int);
+      ("printf", Float);
+      ("printbig", Int) ]
 
   in 
   (* adds unique function names to symbol table *)
@@ -57,7 +53,7 @@ let check (globals, functions) =
   (* Finds a function in the table *)
   let find_func s = 
     try StringMap.find s function_decls
-    with Not_found -> raise (Failure ("error: function never declared" ^ s))
+    with Not_found -> raise (Failure ("error: function never declared: " ^ s))
   in
   
   (* Require main function for all programs *) 
@@ -86,7 +82,7 @@ let check (globals, functions) =
     (* Gets symbols from table *)
     let type_of_identifier s = 
       try StringMap.find s symbols
-      with Not_found -> raise (Failure ("error: variable never declared " ^ s))
+      with Not_found -> raise (Failure ("error: variable never declared: " ^ s))
     in 
 
     (* Checks expressions *)
@@ -101,7 +97,7 @@ let check (globals, functions) =
             Neg when t = Int || t = Float -> t
           | Not when t = Int -> Int
           (* Might be easier just to add Bools... *)
-          | _ -> raise (Failure ("illegal unary operator " ^
+          | _ -> raise (Failure ("error: illegal unary operator " ^
                                  string_of_unop o ^ string_of_typ t ^
                                  " in " ^ string_of_expr ex))
           in (ty, SUnop(o, (t, e')))
@@ -145,15 +141,15 @@ let check (globals, functions) =
       | Index(x, e) when type_of_identifier x = List(Node(Int)) -> 
           let (t, e') = expr e in
             if t = Int then (List(Node(Int)), SIndex(x, expr e))
-            else raise (Failure ("Need Int to index List"))
-      | Index(_) -> raise (Failure ("Indexing of non-List"))
+            else raise (Failure ("error: list can only be indexed by type int"))
+      | Index(_) -> raise (Failure ("error: only data structure of type list can be indexed"))
       | Noexpr -> (Void, SNoexpr)
 
     in
 
     let check_bool_expr e =
       let (t', e') = expr e
-      and err = "expected Int expression in " ^ string_of_expr e
+      and err = "error: expected int expression in " ^ string_of_expr e
       in if t' != Int then raise (Failure err) else (t', e')
     in 
 
@@ -170,7 +166,7 @@ let check (globals, functions) =
           in SBlock(check_stmt_list sl)
       | Return e -> let (t, e') = expr e in
           if t = func.typ then SReturn (t, e')
-          else raise (Failure ("Incorrect return type"))
+          else raise (Failure ("error: expected return to be of type: " ^ string_of_typ t))
       | If(p, b1, b2) -> SIf(check_bool_expr p, check_stmt b1, check_stmt b2)
       | For(e1, e2, e3, s) -> 
           SFor(expr e1, expr e2, expr e3, check_stmt s)
@@ -180,7 +176,7 @@ let check (globals, functions) =
       | Declare(t, x, Noexpr) -> SDeclare(t, x, (Void, SNoexpr))
       | Declare(t, x, e) as d -> let (t', v) = expr e in
           if t' = t then SDeclare(t, x, expr e)
-          else raise (Failure ("Assignment and value do not match in " ^ 
+          else raise (Failure ("error: assignment does not match value in " ^ 
                 string_of_stmt d ))
     in
     (* check_function finally complete *)
