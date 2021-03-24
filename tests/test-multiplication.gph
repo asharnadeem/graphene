@@ -1,6 +1,6 @@
 int main()
 {
     print(a);
-    a = 5 + 20;
+    a = 5 * 20;
     int a;
 }
