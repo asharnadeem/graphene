@@ -1,6 +1,6 @@
 int main(){
     
-    int a = 20 / 5;
+    int a= 5 - 20;
     print(a);
     return 0;
 }
