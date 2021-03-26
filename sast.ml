@@ -13,6 +13,10 @@ and sx =
   | SAccess of string * string
   | SIndex of string * sexpr
   | SNoexpr
+  | SUEdge of string * string
+  | SUEdgeC of string * sexpr * string
+  | SDEdge of string * string
+  | SDEdgeC of string * sexpr * string
 
 type sstmt = 
     SExpr of sexpr
@@ -51,6 +55,10 @@ let rec string_of_sexpr (t, e) =
   | SAccess(x, s) -> x ^ "." ^ x
   | SIndex(x, e) -> x ^ "[" ^ string_of_sexpr e ^ "]"
   | SNoexpr -> ""
+  | SUEdge(n1, n2) -> n1 ^ " ~~ " ^ n2
+  | SUEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_sexpr e ^ ")~ " ^ n2
+  | SDEdge(n1, n2) -> n1 ^ " ~> " ^ n2
+  | SDEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_sexpr e ^ ")>> " ^ n2
   ) ^ ")"
       
 let rec string_of_sstmt = function
@@ -70,7 +78,7 @@ let rec string_of_sstmt = function
   | SContinue -> "continue;"
   | SBreak -> "break;"
   | SDeclare(t, x, se) -> string_of_typ t ^ " " ^ x ^ "; " ^ 
-      string_of_sexpr se ^ ";"
+      string_of_sexpr se ^ ";\n"
 
 let string_of_sfdecl fdecl =
   string_of_typ fdecl.styp ^ " " ^ 

@@ -113,16 +113,16 @@ expr:
   | ID ASSIGN expr { Assign($1, $3) }
   | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
-  /* nodeA ~~ nodeB 
-  | ID UNDIREDGE ID { UEdge($1, $3) }*/
-  /* nodeA ~(5)~ nodeB 
-  | ID TILDE LPAREN literal RPAREN TILDE ID { UEdgeC($1, $4, $7) }*/
-  /* nodeA ~>> nodeB 
-  | ID DIREDGE ID { DEdge($1, $3) }*/
-  /* nodeA ~(5)>> nodeB 
-  | ID TILDE LPAREN literal RPAREN DGT ID { DEdgeC($1, $4, $7) }*/
+  /* nodeA ~~ nodeB */
+  | ID UNDIREDGE ID { UEdge($1, $3) }
+  /* nodeA ~(5)~ nodeB */
+  | ID TILDE LPAREN literal RPAREN TILDE ID { UEdgeC($1, $4, $7) }
+  /* nodeA ~>> nodeB */ 
+  | ID DIREDGE ID { DEdge($1, $3) }
+  /* nodeA ~(5)>> nodeB */
+  | ID TILDE LPAREN literal RPAREN DGT ID { DEdgeC($1, $4, $7) }
   /* node.id 
-  | ID DOT ID { Access($1, $3) }*/
+  | ID DOT ID { Access($1, $3) } */
   /* graph.getNode(key) 
   | ID DOT ID LPAREN args_opt RPAREN { Call(Access($1, $3), $5) }*/
   /* queue[3] 

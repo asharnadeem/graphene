@@ -144,6 +144,27 @@ let check (globals, functions) =
             else raise (Failure ("error: list can only be indexed by type int"))
       | Index(_) -> raise (Failure ("error: only data structure of type list can be indexed"))
       | Noexpr -> (Void, SNoexpr)
+      | UEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
+                         with 
+                           (Node(a), Node(b)) when a = b -> (Edge(Node(a)), SUEdge(n1, n2))
+                         | _ -> raise (Failure ("error: UEdge fail")))
+
+     | UEdgeC(n1, e, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
+                         with 
+                           (Node(a), Node(b)) when a = b -> (Edge(Node(a)), SUEdgeC(n1, expr e, n2))
+                         | _ -> raise (Failure ("error: UEdgeC fail")))
+
+      | DEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
+                         with 
+                           (Node(a), Node(b)) when a = b -> (Edge(Node(a)), SDEdge(n1, n2))
+                         | _ -> raise (Failure ("error: DEdge fail")))
+
+      | DEdgeC(n1, e, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
+                         with 
+                           (Node(a), Node(b)) when a = b -> 
+                              (Edge(Node(a)), SDEdgeC(n1, expr e, n2))
+                         | _ -> raise (Failure ("error: DEdgeC fail")))
+
 
     in
 

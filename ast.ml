@@ -38,7 +38,6 @@ type expr =
   | ListLit of expr list
   ...
    
-  | UEdge of string * string
   | UEdgeC of string * expr * string
   | DEdge of string * string
   | DEdgeC of string * expr * string
@@ -50,6 +49,10 @@ type expr =
   | Access of string * string
   | Index of string * expr
   | Noexpr
+  | UEdge of string * string
+  | UEdgeC of string * expr * string
+  | DEdge of string * string
+  | DEdgeC of string * expr * string
 
 type bind = typ * string
 
@@ -64,7 +67,6 @@ type stmt =
   | Continue
   | Break
   | Declare of typ * string * expr
-
 
 type func_decl = {
     typ : typ;
@@ -128,6 +130,10 @@ let rec string_of_expr = function
   | Access(x, s) -> x ^ "." ^ s
   | Index(x, e) -> x ^ "[" ^ string_of_expr e ^ "]"
   | Noexpr -> ""
+  | UEdge(n1, n2) -> n1 ^ " ~~ " ^ n2 
+  | UEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_expr e ^ ")~ " ^ n2
+  | DEdge(n1, n2) -> n1 ^ " ~> " ^ n2
+  | DEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_expr e ^ ")>> " ^ n2
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"
@@ -145,6 +151,7 @@ let rec string_of_stmt = function
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
   | Continue -> "continue;"
   | Break -> "break;"
+  | Declare(t, x, Noexpr) -> string_of_typ t ^ " " ^ x ^ ";\n"
   | Declare(t, x, e) -> string_of_typ t ^ " " ^ x ^ "; " ^ string_of_expr e ^ ";\n"
 
 

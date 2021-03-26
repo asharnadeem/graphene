@@ -1,0 +1,6 @@
+int main() {
+  node<string> a;
+  node<string> b;
+  a ~(5)>> b;
+  return 0;
+}
