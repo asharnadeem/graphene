@@ -65,7 +65,7 @@ let check (globals, functions) =
     check_binds "formal" func.formals;
     
     let check_assign lvaluet rvaluet err = 
-      if lvaluet = rvaluet then lvaluet else raise (Failure err)
+      if lvaluet = rvaluet then lvaluet else raise (Failure (err ^ "HERE"))
     in
 
     (* Since we aren't using locals, find declarations in fcn *)
@@ -129,9 +129,11 @@ let check (globals, functions) =
           let err = "error: illegal assignment " ^ string_of_typ lt ^ " = "
                   ^ string_of_typ rt ^ " in " ^ string_of_expr ex
           in (match s with 
-              "val" | "id" -> 
+              "val" -> 
                 (check_assign lt rt err, SAssignField(x, s, (rt, e')))
-            | _ -> raise (Failure err))
+            | "id" ->
+                (check_assign Int rt err, SAssignField(x, s, (rt, e')))
+            | _ -> raise (Failure (err)))
       | Call(f, el) as call -> 
           let fd = find_func f in
           let param_length = List.length fd.formals in

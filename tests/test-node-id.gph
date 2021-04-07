@@ -1,0 +1,9 @@
+int main() {
+  node<int> j;
+  node<float> k;
+  j.val = 9;
+  k.val = 0.9;
+  print(j.val);
+  printf(k.val);
+  return 0;
+}

@@ -132,7 +132,8 @@ let translate (globals, functions) =
       (* Construct code for an expression; return its value *)
       let rec expr builder ((_, e) : sexpr) = match e with
           SIlit i     -> L.const_int i32_t i
-        | SSlit l     -> L.const_float_of_string float_t l
+        | SFlit l     -> L.const_float_of_string float_t l
+        | SSlit s     -> L.const_float_of_string float_t s 
         | SNoexpr     -> L.const_int i32_t 0
         | SId s       -> L.build_load (lookup s) s builder
         | SAssign (s, e) -> let e' = expr builder e in
