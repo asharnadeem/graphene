@@ -32,7 +32,8 @@ let check (globals, functions) =
       body = [] } map
       in List.fold_left add_bind StringMap.empty [ ("print", Int);
       ("printf", Float);
-      ("printbig", Int) ]
+      ("printbig", Int);
+     ]
 
   in 
   (* adds unique function names to symbol table *)
@@ -121,6 +122,16 @@ let check (globals, functions) =
           let err = "error: illegal assignment " ^ string_of_typ lt ^ " = " ^
                     string_of_typ rt ^ " in " ^ string_of_expr ex
           in (check_assign lt rt err, SAssign(x, (rt, e')))
+      | AssignField(x, s, e) as ex -> let lt = (match type_of_identifier x with
+              Node(t) -> t
+            | _ -> raise (Failure ("error: cannot access this type")))
+          and (rt, e') = expr e in
+          let err = "error: illegal assignment " ^ string_of_typ lt ^ " = "
+                  ^ string_of_typ rt ^ " in " ^ string_of_expr ex
+          in (match s with 
+              "val" | "id" -> 
+                (check_assign lt rt err, SAssignField(x, s, (rt, e')))
+            | _ -> raise (Failure err))
       | Call(f, el) as call -> 
           let fd = find_func f in
           let param_length = List.length fd.formals in
@@ -136,18 +147,22 @@ let check (globals, functions) =
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(f, args))
      (* next line is placeholder, very incorrect *)
-      | Access(x, s) -> (type_of_identifier x, SAccess(x, s))
-
+      | Access(x, s) -> let t = type_of_identifier x in (match t with
+            Node(tn) -> if s = "val" then (tn, SAccess(x, s))
+                        else if s = "id" then (Int, SAccess(x, s))
+                        else raise (Failure ("error: invalid field"))
+          | _ -> raise (Failure ("error: this type does not have fields")))
       | Index(x, e) when type_of_identifier x = List(Node(Int)) -> 
           let (t, e') = expr e in
+            ignore e';
             if t = Int then (List(Node(Int)), SIndex(x, expr e))
-            else raise (Failure ("error: list can only be indexed by type int"))
+            else raise (Failure ("error: list can only be indexed by type int, used: " ^ string_of_expr e))
       | Index(_) -> raise (Failure ("error: only data structure of type list can be indexed"))
       | Noexpr -> (Void, SNoexpr)
       | UEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
-                         with 
-                           (Node(a), Node(b)) when a = b -> (Edge(Node(a)), SUEdge(n1, n2))
-                         | _ -> raise (Failure ("error: UEdge fail")))
+          with 
+            (Node(a), Node(b)) when a = b -> (Edge(Node(a)), SUEdge(n1, n2))
+          | _ -> raise (Failure ("error: UEdge fail")))
 
      | UEdgeC(n1, e, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
                          with 
@@ -196,6 +211,7 @@ let check (globals, functions) =
       | Break -> SBreak
       | Declare(t, x, Noexpr) -> SDeclare(t, x, (Void, SNoexpr))
       | Declare(t, x, e) as d -> let (t', v) = expr e in
+          ignore v;
           if t' = t then SDeclare(t, x, expr e)
           else raise (Failure ("error: assignment does not match value in " ^ 
                 string_of_stmt d ))

@@ -9,6 +9,7 @@ and sx =
   | SUnop of unop * sexpr
   | SBinop of sexpr * binop * sexpr
   | SAssign of string * sexpr
+  | SAssignField of string * string * sexpr
   | SCall of string * sexpr list
   | SAccess of string * string
   | SIndex of string * sexpr
@@ -50,9 +51,10 @@ let rec string_of_sexpr (t, e) =
   | SBinop(e1, o, e2) -> 
       string_of_sexpr e1 ^ " " ^ string_of_binop o ^ " " ^ string_of_sexpr e2
   | SAssign(s, e) -> s ^ " = " ^ string_of_sexpr e
+  | SAssignField(x, s, e) -> x ^ "." ^ s ^ " = " ^ string_of_sexpr e
   | SCall(f, el) -> 
       f ^ "(" ^ String.concat ", " (List.map string_of_sexpr el) ^ ")"
-  | SAccess(x, s) -> x ^ "." ^ x
+  | SAccess(x, s) -> x ^ "." ^ s
   | SIndex(x, e) -> x ^ "[" ^ string_of_sexpr e ^ "]"
   | SNoexpr -> ""
   | SUEdge(n1, n2) -> n1 ^ " ~~ " ^ n2

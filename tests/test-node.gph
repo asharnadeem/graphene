@@ -1,0 +1,6 @@
+int main() {
+  node <int> j;
+  j.id = 8;
+  print(j.id);
+  return 0;
+}

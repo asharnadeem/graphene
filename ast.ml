@@ -45,6 +45,7 @@ type expr =
   | Unop of unop * expr
   | Binop of expr * binop * expr
   | Assign of string * expr
+  | AssignField of string * string * expr
   | Call of string * expr list
   | Access of string * string
   | Index of string * expr
@@ -125,6 +126,7 @@ let rec string_of_expr = function
   | Binop(e1, o, e2) -> string_of_expr e1 ^ " " ^ 
     string_of_binop o ^ " " ^ string_of_expr e2
   | Assign(x, e) -> x ^ " = " ^ string_of_expr e
+  | AssignField(x, s, e) -> x ^ "." ^ s ^ " = " ^ string_of_expr e
   | Call(f, el) -> 
     f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Access(x, s) -> x ^ "." ^ s

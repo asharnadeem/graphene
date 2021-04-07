@@ -4,6 +4,18 @@ open Sast
 
 module StringMap = Map.Make(String)
 
+type struct_built_in = {
+    members: A.bind list;
+    name: string;
+}
+
+let node_int = { members = [(A.Int, "key"); (A.Int, "val")];
+                 name = "node_int" }
+
+let built_in_structs = [node_int]
+
+
+
 (* translate : Sast.program -> Llvm.module *)
 let translate (globals, functions) =
   let context    = L.global_context () in
@@ -17,15 +29,30 @@ let translate (globals, functions) =
   and i8_t       = L.i8_type     context
   and string_t   = L.pointer_type (L.i8_type context)
   and float_t    = L.double_type context
-  and void_t     = L.void_type   context in
+  and void_t     = L.void_type   context 
+  in
+  
 
-  (* Return the LLVM type for a MicroC type *)
-  let ltype_of_typ = function
+   (* Return the LLVM type for a Graphene type *)
+  let rec ltype_of_typ = function
       A.Int     -> i32_t
     | A.String  -> string_t
     | A.Float   -> float_t
     | A.Void    -> void_t
+    | A.Node(t) -> L.struct_type context [| i32_t; ltype_of_typ t |]
   in
+
+  let struct_map = 
+    let struct_decl map sdecl =
+      let name = sdecl.name
+      and member_types = Array.of_list (List.map 
+          (fun (t, _) -> ltype_of_typ t) sdecl.members) in 
+      let stype = L.struct_type context member_types in
+      StringMap.add name (stype, sdecl.members) map in
+    List.fold_left struct_decl StringMap.empty built_in_structs
+  in
+
+
 
   (* Create a map of global variables after creating each *)
   let global_vars : L.llvalue StringMap.t =
@@ -110,6 +137,12 @@ let translate (globals, functions) =
         | SId s       -> L.build_load (lookup s) s builder
         | SAssign (s, e) -> let e' = expr builder e in
                             ignore(L.build_store e' (lookup s) builder); e'
+        | SAssignField (x, s, e) -> let e' = expr builder e in let mem = 
+            (match s with
+              "id" -> 0
+            | "val" -> 1) in
+            let p = L.build_struct_gep (lookup x) mem "struct.ptr" builder in
+            ignore(L.build_store e' p builder); e'
         | SBinop ((A.Float,_ ) as e1, op, e2) ->
       let e1' = expr builder e1
       and e2' = expr builder e2 in
@@ -118,6 +151,7 @@ let translate (globals, functions) =
       | A.Sub     -> L.build_fsub
       | A.Mul     -> L.build_fmul
       | A.Div     -> L.build_fdiv 
+      | A.Mod     -> L.build_frem
       | A.Eq      -> L.build_fcmp L.Fcmp.Oeq
       | A.Neq     -> L.build_fcmp L.Fcmp.One
       | A.Less    -> L.build_fcmp L.Fcmp.Olt
@@ -135,6 +169,7 @@ let translate (globals, functions) =
       | A.Sub     -> L.build_sub
       | A.Mul     -> L.build_mul
       | A.Div     -> L.build_sdiv
+      | A.Mod     -> L.build_srem
       | A.And     -> L.build_and
       | A.Or      -> L.build_or
       | A.Eq      -> L.build_icmp L.Icmp.Eq
@@ -165,6 +200,11 @@ let translate (globals, functions) =
                           A.Void -> ""
                         | _ -> f ^ "_result") in
            L.build_call fdef (Array.of_list llargs) result builder
+      | SAccess (s, x) -> let mem = (match x with
+            "id" -> 0
+          | "val" -> 1) in
+          let p = L.build_struct_gep (lookup s) mem "struct.ptr" builder in
+          L.build_load p ("struct.val." ^ x) builder
       in
       
     (* LLVM insists each basic block end with exactly one "terminator" 

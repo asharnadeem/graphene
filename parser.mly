@@ -111,6 +111,7 @@ expr:
   | MINUS expr %prec NOT { Unop(Neg, $2) }
   | NOT expr { Unop(Not, $2) }
   | ID ASSIGN expr { Assign($1, $3) }
+  | ID DOT ID ASSIGN expr { AssignField($1, $3, $5) }
   | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
   /* nodeA ~~ nodeB */
@@ -121,8 +122,8 @@ expr:
   | ID DIREDGE ID { DEdge($1, $3) }
   /* nodeA ~(5)>> nodeB */
   | ID TILDE LPAREN literal RPAREN DGT ID { DEdgeC($1, $4, $7) }
-  /* node.id 
-  | ID DOT ID { Access($1, $3) } */
+  /* node.id */ 
+  | ID DOT ID { Access($1, $3) } 
   /* graph.getNode(key) 
   | ID DOT ID LPAREN args_opt RPAREN { Call(Access($1, $3), $5) }*/
   /* queue[3] 
