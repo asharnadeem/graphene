@@ -14,11 +14,15 @@ let node_int = { members = [(A.Int, "key"); (A.Int, "val")];
 
 let built_in_structs = [node_int]
 
+let get_type(t, _) = t
 
 
 (* translate : Sast.program -> Llvm.module *)
 let translate (globals, functions) =
   let context    = L.global_context () in
+
+  let llmem_graph = L.MemoryBuffer.of_file "graphene.bc" in
+  let llm_graph = Llvm_bitreader.parse_bitcode context llmem_graph in
   
   (* Create the LLVM compilation module into which
      we will generate code *)
@@ -30,6 +34,10 @@ let translate (globals, functions) =
   and string_t   = L.pointer_type (L.i8_type context)
   and float_t    = L.double_type context
   and void_t     = L.void_type   context 
+  and void_ptr_t = L.pointer_type (L.i8_type context)
+  and lst_t      = L.pointer_type (match L.type_by_name llm_graph "struct.list" with
+      None -> raise (Failure "Missing implementation for struct list")
+    | Some t -> t)
   in
   
 
@@ -40,6 +48,7 @@ let translate (globals, functions) =
     | A.Float   -> float_t
     | A.Void    -> void_t
     | A.Node(t) -> L.struct_type context [| i32_t; ltype_of_typ t |]
+    | A.List _  -> lst_t
   in
 
   let struct_map = 
@@ -72,6 +81,21 @@ let translate (globals, functions) =
       L.function_type i32_t [| i32_t |] in
   let printbig_func : L.llvalue =
       L.declare_function "printbig" printbig_t the_module in
+
+  let make_list_t = L.function_type lst_t [||] in
+  let make_list_func = L.declare_function "make_list" make_list_t the_module in
+
+  let list_index_t = L.function_type i32_t [| lst_t; void_ptr_t |] in
+  let list_index_func = L.declare_function "index" list_index_t the_module in
+
+  let list_push_back_t = L.function_type i32_t [| lst_t; void_ptr_t |] in
+  let list_push_back_func = L.declare_function "push_back" list_push_back_t the_module in
+
+  let list_push_back_int_t = L.function_type i32_t [| lst_t; i32_t |] in
+  let list_push_back_int_func = L.declare_function "push_back_int" list_push_back_int_t the_module in
+
+  let list_push_back_float_t = L.function_type float_t [| lst_t; float_t |] in
+  let list_push_back_float_func = L.declare_function "push_back_int" list_push_back_int_t the_module in
 
   (* Define each function (arguments and return type) so we can 
      call it even before we've created its body *)
@@ -138,6 +162,36 @@ let translate (globals, functions) =
         | SId s       -> L.build_load (lookup s) s builder
         | SAssign (s, e) -> let e' = expr builder e in
                             ignore(L.build_store e' (lookup s) builder); e'
+        | SListLit l -> let rec list_fill lst = (function
+        [] -> lst
+        | sx :: rest ->
+        let (t, _) = sx in 
+        let data = (match t with
+          A.List _ -> expr builder sx 
+          | _ -> let data = L.build_malloc (ltype_of_typ t) "data" builder in
+            let llvm =  expr builder sx 
+            in ignore(L.build_store llvm data builder); data)
+        in let data = L.build_bitcast data void_ptr_t "data" builder in
+          ignore(L.build_call list_push_back_func [| lst; data |] "list_push_back" builder); list_fill lst rest) in
+        let m = L.build_call make_list_func [||] "make_list" builder in
+        list_fill m l
+        | SIndex(l, e) ->
+          let ltype = ltype_of_typ fdecl.styp in
+          let lst = expr builder l in
+          let index = expr builder e in
+          let data = L.build_call list_index_func [| lst; index |] "index" builder in
+            (match fdecl.styp with 
+            A.Int -> L.build_bitcast data ltype "data" builder
+            | _ -> let data = L.build_bitcast data (L.pointer_type ltype) "data" builder in
+              L.build_load data "data" builder)
+
+        | SList_Push_Back(l, e) -> let r = (match get_type(e) with
+			    A.Int -> let l' = expr builder l and e' = expr builder e in
+				  L.build_call list_push_back_int_func [|l'; e'|] "push_back_int" builder;
+			    | A.Float -> let l' = expr builder l and e' = expr builder e in
+				  L.build_call list_push_back_float_func [|l'; e'|] "push_back_float" builder;
+          | _ -> raise(Failure("not valid list type"))) in
+          r
         | SAssignField (x, s, e) -> let e' = expr builder e in let mem = 
             (match s with
               "id" -> 0

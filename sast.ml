@@ -6,18 +6,20 @@ and sx =
   | SSlit of string
   | SFlit of string
   | SId of string
+  | SListLit of sexpr list 
   | SUnop of unop * sexpr
   | SBinop of sexpr * binop * sexpr
   | SAssign of string * sexpr
   | SAssignField of string * string * sexpr
   | SCall of string * sexpr list
   | SAccess of string * string
-  | SIndex of string * sexpr
+  | SIndex of sexpr * sexpr
   | SNoexpr
   | SUEdge of string * string
   | SUEdgeC of string * sexpr * string
   | SDEdge of string * string
   | SDEdgeC of string * sexpr * string
+  | SList_Push_Back of sexpr * sexpr
 
 type sstmt = 
     SExpr of sexpr
@@ -47,6 +49,7 @@ let rec string_of_sexpr (t, e) =
   | SSlit(l) -> "\"" ^ l ^ "\""
   | SFlit(l) -> l
   | SId(s) -> s
+  | SListLit(l) -> "[" ^ String.concat "," (List.map string_of_sexpr l) ^ "]"
   | SUnop(o, e) -> string_of_unop o ^ string_of_sexpr e
   | SBinop(e1, o, e2) -> 
       string_of_sexpr e1 ^ " " ^ string_of_binop o ^ " " ^ string_of_sexpr e2
@@ -55,7 +58,8 @@ let rec string_of_sexpr (t, e) =
   | SCall(f, el) -> 
       f ^ "(" ^ String.concat ", " (List.map string_of_sexpr el) ^ ")"
   | SAccess(x, s) -> x ^ "." ^ s
-  | SIndex(x, e) -> x ^ "[" ^ string_of_sexpr e ^ "]"
+  | SIndex(x, e) -> string_of_sexpr x ^ "[" ^ string_of_sexpr e ^ "]"
+  | SList_Push_Back(l, e) -> string_of_sexpr l ^ ".push_back(" ^ string_of_sexpr e ^ ")"
   | SNoexpr -> ""
   | SUEdge(n1, n2) -> n1 ^ " ~~ " ^ n2
   | SUEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_sexpr e ^ ")~ " ^ n2

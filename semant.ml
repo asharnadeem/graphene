@@ -5,6 +5,19 @@ open Sast
 
 module StringMap = Map.Make(String) 
 
+let valid_element_type = function
+       	(Void,_) -> raise(Failure("error: list of type void not allowed"))
+	| _ -> ()
+  
+let check_type (ex, ty) = 
+	if ex = ty then () 
+	else raise (Failure ("error: "))
+
+let get_type(t, _) = t
+let first_element (myList) = match myList with
+ [] -> Void
+| first_e1 :: _ -> get_type(first_e1)
+
 (* Check global variables, then each function *)
 let check (globals, functions) =
 
@@ -22,6 +35,19 @@ let check (globals, functions) =
       | _ :: t -> dups t
     in dups (List.sort (fun (_,a) (_,b) -> compare a b) binds)
   in check_binds "global" globals;
+
+  let check_list_binds (binds : sexpr list) =
+      List.iter valid_element_type binds;
+
+      let rec check_type = function
+          [] -> ()
+      | ((t1,_) :: (t2,_) :: _) when t1 != t2 ->
+              raise (Failure ("error: list elements of different types"))
+      | _ :: t -> check_type t
+      in check_type (List.sort (fun (a,_) (b,_) -> compare a b) binds);
+      
+      (*first_element(binds)*)
+  in
 
   (* Check functions *)
   let built_in_decls = 
@@ -65,7 +91,7 @@ let check (globals, functions) =
     check_binds "formal" func.formals;
     
     let check_assign lvaluet rvaluet err = 
-      if lvaluet = rvaluet then lvaluet else raise (Failure (err ^ "HERE"))
+      if lvaluet = rvaluet then lvaluet else raise (Failure (err ^ ""))
     in
 
     (* Since we aren't using locals, find declarations in fcn *)
@@ -87,7 +113,18 @@ let check (globals, functions) =
     in 
 
     (* Checks expressions *)
-    let rec expr = function
+    let rec expr = 
+      let check_list m =
+          let (t, _) = expr m in
+          match t with
+          List(_) -> ()
+          |_ -> raise (Failure ("error: expected different list type: " ^ string_of_typ t)) in
+      let check_list_type m =
+				let (t, _) = expr m in
+				match t with
+				 List(ty) -> ty
+				|_ -> raise (Failure ("error: " ^ string_of_typ t)) in
+      function
         Ilit l -> (Int, SIlit l)
       | Slit l -> (String, SSlit l)
       | Flit l -> (Float, SFlit l)
@@ -154,11 +191,9 @@ let check (globals, functions) =
                         else if s = "id" then (Int, SAccess(x, s))
                         else raise (Failure ("error: invalid field"))
           | _ -> raise (Failure ("error: this type does not have fields")))
-      | Index(x, e) when type_of_identifier x = List(Node(Int)) -> 
-          let (t, e') = expr e in
-            ignore e';
-            if t = Int then (List(Node(Int)), SIndex(x, expr e))
-            else raise (Failure ("error: list can only be indexed by type int, used: " ^ string_of_expr e))
+      | Index(l, i) -> check_list(l);
+				check_type(get_type(expr i), Int);
+          		(check_list_type(l), SIndex (expr l, expr i))
       | Index(_) -> raise (Failure ("error: only data structure of type list can be indexed"))
       | Noexpr -> (Void, SNoexpr)
       | UEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
@@ -181,6 +216,9 @@ let check (globals, functions) =
                            (Node(a), Node(b)) when a = b -> 
                               (Edge(Node(a)), SDEdgeC(n1, expr e, n2))
                          | _ -> raise (Failure ("error: DEdgeC fail")))
+      | List_Push_Back(l, e) -> check_list(l);
+				valid_element_type(expr e);
+				(Void, SList_Push_Back (expr l, expr e))
 
 
     in

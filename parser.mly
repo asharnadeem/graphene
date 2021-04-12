@@ -7,6 +7,7 @@
 %token TILDE DIREDGE UNDIREDGE DGT
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID
+%token PUSH_BACK
 %token <int> LITERAL
 %token <string> FLIT
 %token <string> SLIT
@@ -26,6 +27,7 @@
 %left PLUS MINUS
 %left TIMES DIVIDE MOD
 %right NOT
+%right PUSH_BACK
 
 %%
 
@@ -126,10 +128,11 @@ expr:
   | ID DOT ID { Access($1, $3) } 
   /* graph.getNode(key) 
   | ID DOT ID LPAREN args_opt RPAREN { Call(Access($1, $3), $5) }*/
-  /* queue[3] 
-  | ID LSQUARE expr RSQUARE { Index($1, $3) }*/
+  /* queue[3] */
+  | expr LSQUARE expr RSQUARE { Index($1, $3) }
   /* [1,2,3,4,5] 
   Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
+  | expr PUSH_BACK LPAREN expr RPAREN { List_Push_Back($1, $4) }
 
 literal:
     ID { Id($1) }
