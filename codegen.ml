@@ -29,7 +29,7 @@ let translate (globals, functions) =
   let the_module = L.create_module context "Graphene" in
 
   (* Get types from the context *)
-  let i32_t      = L.i32_type    context
+  let i32_t      = L.i32_type    context 
   and i8_t       = L.i8_type     context
   and string_t   = L.pointer_type (L.i8_type context)
   and float_t    = L.double_type context
@@ -74,15 +74,29 @@ let translate (globals, functions) =
 
   let printf_t : L.lltype = 
       L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
-  let printf_func : L.llvalue = 
+  let printf_f : L.llvalue = 
       L.declare_function "printf" printf_t the_module in
 
   let printbig_t : L.lltype =
       L.function_type i32_t [| i32_t |] in
-  let printbig_func : L.llvalue =
+  let printbig_f : L.llvalue =
       L.declare_function "printbig" printbig_t the_module in
 
-  let make_list_t = L.function_type lst_t [||] in
+  let list_init_t : L.lltype = 
+      L.function_type lst_t [| |] in
+  let list_init_f : L.llvalue =
+      L.declare_function "list_init" list_init_t the_module in
+
+  let list_push_back_t : L.lltype = 
+      L.function_type i32_t [|lst_t ; i32_t|] in
+  let list_push_back_f : L.llvalue =
+      L.declare_function "list_push_back" list_push_back_t the_module in
+
+  let list_index_t : L.lltype =
+      L.function_type i32_t [|lst_t ; i32_t|] in  
+  let list_index_f : L.llvalue =
+      L.declare_function "list_index" list_index_t the_module in
+   (* let make_list_t = L.function_type lst_t [||] in
   let make_list_func = L.declare_function "make_list" make_list_t the_module in
 
   let list_index_t = L.function_type i32_t [| lst_t; void_ptr_t |] in
@@ -95,7 +109,7 @@ let translate (globals, functions) =
   let list_push_back_int_func = L.declare_function "push_back_int" list_push_back_int_t the_module in
 
   let list_push_back_float_t = L.function_type float_t [| lst_t; float_t |] in
-  let list_push_back_float_func = L.declare_function "push_back_int" list_push_back_int_t the_module in
+  let list_push_back_float_func = L.declare_function "push_back_int" list_push_back_int_t the_module in  *)
 
   (* Define each function (arguments and return type) so we can 
      call it even before we've created its body *)
@@ -129,7 +143,7 @@ let translate (globals, functions) =
   
         (* Allocate space for any locally declared variables and add the
          * resulting registers to our map *)
-        and add_local m (t, n) =
+        and add_local m (t, n) = 
     let local_var = L.build_alloca (ltype_of_typ t) n builder
     in StringMap.add n local_var m 
         in
@@ -162,7 +176,7 @@ let translate (globals, functions) =
         | SId s       -> L.build_load (lookup s) s builder
         | SAssign (s, e) -> let e' = expr builder e in
                             ignore(L.build_store e' (lookup s) builder); e'
-        | SListLit l -> let rec list_fill lst = (function
+        (* | SListLit l -> let rec list_fill lst = (function
         [] -> lst
         | sx :: rest ->
         let (t, _) = sx in 
@@ -174,7 +188,7 @@ let translate (globals, functions) =
         in let data = L.build_bitcast data void_ptr_t "data" builder in
           ignore(L.build_call list_push_back_func [| lst; data |] "list_push_back" builder); list_fill lst rest) in
         let m = L.build_call make_list_func [||] "make_list" builder in
-        list_fill m l
+        list_fill m l *)
         (* | SIndex(l, e) ->
           let ltype = ltype_of_typ fdecl.styp in
           let lst = expr builder l in
@@ -185,13 +199,13 @@ let translate (globals, functions) =
             | _ -> let data = L.build_bitcast data (L.pointer_type ltype) "data" builder in
               L.build_load data "data" builder) *)
 
-        | SList_Push_Back(l, e) -> let r = (match get_type(e) with
+        (* | SList_Push_Back(l, e) -> let r = (match get_type(e) with
 			    A.Int -> let l' = expr builder l and e' = expr builder e in
 				  L.build_call list_push_back_int_func [|l'; e'|] "push_back_int" builder;
 			    | A.Float -> let l' = expr builder l and e' = expr builder e in
 				  L.build_call list_push_back_float_func [|l'; e'|] "push_back_float" builder;
           | _ -> raise(Failure("not valid list type"))) in
-          r
+          r *)
         | SAssignField (x, s, e) -> let e' = expr builder e in let mem = 
             (match s with
               "id" -> 0
@@ -241,13 +255,17 @@ let translate (globals, functions) =
       | A.Neg                  -> L.build_neg
       | A.Not                  -> L.build_not) e' "tmp" builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
-	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
+	  L.build_call printf_f [| int_format_str ; (expr builder e) |]
 	    "printf" builder
       | SCall ("printbig", [e]) ->
-	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+	  L.build_call printbig_f [| (expr builder e) |] "printbig" builder
       | SCall ("printf", [e]) -> 
-	  L.build_call printf_func [| float_format_str ; (expr builder e) |]
+	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
+      | SCall ("list_push_back", [l; e]) ->
+    L.build_call list_push_back_f [| expr builder l; expr builder e |] "list_push_back" builder
+      | SCall ("list_index", [l; e]) -> 
+    L.build_call list_index_f [|expr builder l; expr builder e|] "list_index" builder
       | SCall (f, args) ->
            let (fdef, fdecl) = StringMap.find f function_decls in
      let llargs = List.rev (List.map (expr builder) (List.rev args)) in
@@ -318,7 +336,11 @@ let translate (globals, functions) =
         (* Implement for loops as while loops *)
         | SFor (e1, e2, e3, body) -> stmt builder
         ( SBlock [SExpr e1 ; SWhile (e2, SBlock [body ; SExpr e3]) ] )
+        | SDeclare(A.List(t), s, _) -> 
+            let ptr = L.build_call list_init_f [| |] "init" builder in
+            ignore (L.build_store ptr (lookup s) builder); builder
         | SDeclare(_, _, a) -> ignore(expr builder a); builder
+        
       in
   
       (* Build the code for each statement in the function *)

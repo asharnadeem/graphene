@@ -47,10 +47,10 @@ let check (globals, functions) =
       in check_type (List.sort (fun (a,_) (b,_) -> compare a b) binds);
       
       (*first_element(binds)*)
-  in
+  in 
 
   (* Check functions *)
-  let built_in_decls = 
+  let built_in_decls_one = 
     let add_bind map (name, t) = StringMap.add name {
       typ = Void;
       fname = name;
@@ -61,7 +61,17 @@ let check (globals, functions) =
       ("printbig", Int);
      ]
 
-  in 
+  in let built_in_decls = 
+    let add_bind2 map (ft, name, t1, t2) = StringMap.add name {
+      typ = ft;
+      fname = name;
+      formals = [(t1, "x"); (t2, "y")];
+      body = [] } map
+      in List.fold_left add_bind2 built_in_decls_one [ (Int, "list_push_back", List(Int), Int);
+      (Int, "list_index", List(Int), Int)
+     ]
+  
+  in
   (* adds unique function names to symbol table *)
   let add_func map fd = 
     let built_in_err = "function " ^ fd.fname ^ " may not be defined"
@@ -216,9 +226,9 @@ let check (globals, functions) =
                            (Node(a), Node(b)) when a = b -> 
                               (Edge(Node(a)), SDEdgeC(n1, expr e, n2))
                          | _ -> raise (Failure ("error: DEdgeC fail")))
-      | List_Push_Back(l, e) -> check_list(l);
+      (* | List_Push_Back(l, e) -> check_list(l);
 				valid_element_type(expr e);
-				(Void, SList_Push_Back (expr l, expr e))
+				(Void, SList_Push_Back (expr l, expr e)) *)
 
 
     in

@@ -1,7 +1,10 @@
 int main(){
     list<int> l;
     l.push_back(1);
-    int a;
-    //l[3];
+    l.push_back(2);
+    print(4);
+    print(l[0]);
+    print(l[1]);
+    print(l[2]);
     return 0;
 }
