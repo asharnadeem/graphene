@@ -19,7 +19,6 @@ and sx =
   | SUEdgeC of string * sexpr * string
   | SDEdge of string * string
   | SDEdgeC of string * sexpr * string
-  | SList_Push_Back of sexpr * sexpr
 
 type sstmt = 
     SExpr of sexpr
@@ -59,7 +58,6 @@ let rec string_of_sexpr (t, e) =
       f ^ "(" ^ String.concat ", " (List.map string_of_sexpr el) ^ ")"
   | SAccess(x, s) -> x ^ "." ^ s
   (* | SIndex(x, e) -> string_of_sexpr x ^ "[" ^ string_of_sexpr e ^ "]" *)
-  | SList_Push_Back(l, e) -> string_of_sexpr l ^ ".push_back(" ^ string_of_sexpr e ^ ")"
   | SNoexpr -> ""
   | SUEdge(n1, n2) -> n1 ^ " ~~ " ^ n2
   | SUEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_sexpr e ^ ")~ " ^ n2

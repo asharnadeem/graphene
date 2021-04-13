@@ -61,7 +61,7 @@ rule token = parse
   | "break"               { BREAK }
 
 (* list functions*)
-  |".push_back"           { PUSH_BACK }
+  |"push_back_int"       { PUSH_BACK }
 
 (* literals *)
   | '\"' ([^'\"']* as str) '\"' { SLIT(str) }

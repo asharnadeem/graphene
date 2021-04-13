@@ -2,7 +2,7 @@
 
 struct l_node
 {
-    void *element;
+    int element;
     struct list *next;
 };
 
@@ -13,4 +13,4 @@ struct list {
 
 int index(struct list *list, int index);
 
-int add_tail(struct list *list, void *element);
+int push_back_int(struct list *list, int element);

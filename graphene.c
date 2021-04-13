@@ -22,7 +22,7 @@ int index(struct list *list, int index)
     return -1;
 }
 
-int add_tail(struct list *list, void *element)
+int push_back_int(struct list *list, int element)
 {
 
     struct l_node *node = (struct l_node *)malloc(sizeof(struct l_node));
@@ -47,3 +47,33 @@ int add_tail(struct list *list, void *element)
     list->size = list->size + 1;
     return 0;
 }
+
+int main()
+{
+    
+}
+
+#ifdef BUILD_TEST
+int main()
+{
+  char s[] = "HELLO WORLD09AZ";
+  char *c;
+  for ( c = s ; *c ; c++) printf(".");
+}
+#endif
+
+// int main(){
+    
+//     struct list *test = (struct list *)malloc(sizeof(struct list));
+//     struct l_node *node = (struct l_node *)malloc(sizeof(struct l_node));
+//     node->element = 10;
+//     node->next = NULL;
+//     test->head = node;
+//     test->size = 1;
+//     push_back(test, 5);
+    
+//     struct l_node *node2 = (struct l_node *)malloc(sizeof(struct l_node));
+//     node2 = test->head->next;
+
+//     printf("%d\n", node2->element);
+// }

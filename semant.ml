@@ -51,7 +51,8 @@ let check (globals, functions) =
 
   (* Check functions *)
   let built_in_decls = 
-    let add_bind map (name, t) = StringMap.add name {
+    
+    (* let add_bind map (name, t) = StringMap.add name {
       typ = Void;
       fname = name;
       formals = [(t, "x")];
@@ -59,9 +60,17 @@ let check (globals, functions) =
       in List.fold_left add_bind StringMap.empty [ ("print", Int);
       ("printf", Float);
       ("printbig", Int);
-     ]
+     ] in *)
 
-  in 
+    let add_bind2 map (name, t1, t2) = StringMap.add name {
+      typ = Void;
+      fname = name;
+      formals = [(t1, "x"); (t2, "y")];
+      body = [] } map 
+      in List.fold_left add_bind2 StringMap.empty [
+      ("push_back_int", List(Int), Int);
+     ]; in
+
   (* adds unique function names to symbol table *)
   let add_func map fd = 
     let built_in_err = "function " ^ fd.fname ^ " may not be defined"
@@ -216,9 +225,6 @@ let check (globals, functions) =
                            (Node(a), Node(b)) when a = b -> 
                               (Edge(Node(a)), SDEdgeC(n1, expr e, n2))
                          | _ -> raise (Failure ("error: DEdgeC fail")))
-      | List_Push_Back(l, e) -> check_list(l);
-				valid_element_type(expr e);
-				(Void, SList_Push_Back (expr l, expr e))
 
 
     in

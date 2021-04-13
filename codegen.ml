@@ -82,20 +82,13 @@ let translate (globals, functions) =
   let printbig_func : L.llvalue =
       L.declare_function "printbig" printbig_t the_module in
 
+  let push_back_int_t : L.lltype =
+      L.function_type i32_t [| lst_t ; i32_t |] in
+  let push_back_int_func : L.llvalue =
+      L.declare_function "push_back_int" push_back_int_t the_module in
+
   let make_list_t = L.function_type lst_t [||] in
   let make_list_func = L.declare_function "make_list" make_list_t the_module in
-
-  let list_index_t = L.function_type i32_t [| lst_t; void_ptr_t |] in
-  let list_index_func = L.declare_function "index" list_index_t the_module in
-
-  let list_push_back_t = L.function_type i32_t [| lst_t; void_ptr_t |] in
-  let list_push_back_func = L.declare_function "push_back" list_push_back_t the_module in
-
-  let list_push_back_int_t = L.function_type i32_t [| lst_t; i32_t |] in
-  let list_push_back_int_func = L.declare_function "push_back_int" list_push_back_int_t the_module in
-
-  let list_push_back_float_t = L.function_type float_t [| lst_t; float_t |] in
-  let list_push_back_float_func = L.declare_function "push_back_int" list_push_back_int_t the_module in
 
   (* Define each function (arguments and return type) so we can 
      call it even before we've created its body *)
@@ -172,26 +165,9 @@ let translate (globals, functions) =
             let llvm =  expr builder sx 
             in ignore(L.build_store llvm data builder); data)
         in let data = L.build_bitcast data void_ptr_t "data" builder in
-          ignore(L.build_call list_push_back_func [| lst; data |] "list_push_back" builder); list_fill lst rest) in
+          ignore(L.build_call push_back_int_func [| lst; data |] "push_back_int_func" builder); list_fill lst rest) in
         let m = L.build_call make_list_func [||] "make_list" builder in
         list_fill m l
-        (* | SIndex(l, e) ->
-          let ltype = ltype_of_typ fdecl.styp in
-          let lst = expr builder l in
-          let index = expr builder e in
-          let data = L.build_call list_index_func [| lst; index |] "index" builder in
-            (match fdecl.styp with 
-            A.Int -> L.build_bitcast data ltype "data" builder
-            | _ -> let data = L.build_bitcast data (L.pointer_type ltype) "data" builder in
-              L.build_load data "data" builder) *)
-
-        | SList_Push_Back(l, e) -> let r = (match get_type(e) with
-			    A.Int -> let l' = expr builder l and e' = expr builder e in
-				  L.build_call list_push_back_int_func [|l'; e'|] "push_back_int" builder;
-			    | A.Float -> let l' = expr builder l and e' = expr builder e in
-				  L.build_call list_push_back_float_func [|l'; e'|] "push_back_float" builder;
-          | _ -> raise(Failure("not valid list type"))) in
-          r
         | SAssignField (x, s, e) -> let e' = expr builder e in let mem = 
             (match s with
               "id" -> 0
@@ -240,6 +216,13 @@ let translate (globals, functions) =
         A.Neg when t = A.Float -> L.build_fneg 
       | A.Neg                  -> L.build_neg
       | A.Not                  -> L.build_not) e' "tmp" builder
+      | SCall (f, args) when f = "push_back_int" ->
+        let (fdef, fdecl) = StringMap.find f function_decls in
+          let llargs = List.rev (List.map (expr builder) (List.rev args)) in
+            let result = (match fdecl.styp with 
+                                  A.Void -> ""
+                                | _ -> f ^ "_result") in
+                  L.build_call fdef (Array.of_list llargs) result builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder
