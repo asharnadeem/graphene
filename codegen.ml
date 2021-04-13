@@ -175,7 +175,7 @@ let translate (globals, functions) =
           ignore(L.build_call list_push_back_func [| lst; data |] "list_push_back" builder); list_fill lst rest) in
         let m = L.build_call make_list_func [||] "make_list" builder in
         list_fill m l
-        | SIndex(l, e) ->
+        (* | SIndex(l, e) ->
           let ltype = ltype_of_typ fdecl.styp in
           let lst = expr builder l in
           let index = expr builder e in
@@ -183,7 +183,7 @@ let translate (globals, functions) =
             (match fdecl.styp with 
             A.Int -> L.build_bitcast data ltype "data" builder
             | _ -> let data = L.build_bitcast data (L.pointer_type ltype) "data" builder in
-              L.build_load data "data" builder)
+              L.build_load data "data" builder) *)
 
         | SList_Push_Back(l, e) -> let r = (match get_type(e) with
 			    A.Int -> let l' = expr builder l and e' = expr builder e in

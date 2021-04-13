@@ -129,7 +129,7 @@ expr:
   /* graph.getNode(key) 
   | ID DOT ID LPAREN args_opt RPAREN { Call(Access($1, $3), $5) }*/
   /* queue[3] */
-  | expr LSQUARE expr RSQUARE { Index($1, $3) }
+  /* | expr LSQUARE expr RSQUARE { Index($1, $3) } */
   /* [1,2,3,4,5] 
   Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
   | expr PUSH_BACK LPAREN expr RPAREN { List_Push_Back($1, $4) }

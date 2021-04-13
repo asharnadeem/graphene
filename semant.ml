@@ -191,10 +191,10 @@ let check (globals, functions) =
                         else if s = "id" then (Int, SAccess(x, s))
                         else raise (Failure ("error: invalid field"))
           | _ -> raise (Failure ("error: this type does not have fields")))
-      | Index(l, i) -> check_list(l);
+      (* | Index(l, i) -> check_list(l);
 				check_type(get_type(expr i), Int);
-          		(check_list_type(l), SIndex (expr l, expr i))
-      | Index(_) -> raise (Failure ("error: only data structure of type list can be indexed"))
+          		(check_list_type(l), SIndex (expr l, expr i)) *)
+      (* | Index(_) -> raise (Failure ("error: only data structure of type list can be indexed")) *)
       | Noexpr -> (Void, SNoexpr)
       | UEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
           with 
