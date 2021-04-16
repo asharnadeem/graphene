@@ -82,10 +82,27 @@ int list_index(struct list *list, int index)
 }
 
 struct list * list_init() {
+    struct node d;
+    
     struct list *list = malloc(sizeof(struct list));
     list->size = 0;
     list->head = NULL;
     return list;
+}
+
+struct node * node_init(){
+    //printf("node_init");
+    struct node *node = malloc(sizeof(struct node));
+    node->val = malloc(sizeof(void *));
+    return node;
+}
+
+void node_idset(struct node *node, int id) {
+  node->id = id;
+}
+
+void node_valset(struct node *node, void *val) {
+  node->val = val;
 }
 
 int list_push_back(struct list *list, int element)
@@ -114,16 +131,23 @@ int list_push_back(struct list *list, int element)
     return 1;
 }
 
-// int main(){
+//  int main(){
+//     struct node_int james;
+//     james.val = 20;
+//     james.id = 22;
+//     printf("%d, %d", james.id, james.val); }
 
 //     struct list * test = list_init();
 //     list_push_back(test, 20);
 //     list_push_back(test, 22);
 //     printf("%d\n", test->head->element);
-//     // int a;
-//     // //l[3];
-//     // return 0;
-// }
+//     struct node james = node_init();
+//     printf("%d", james.id);
+//     printf("%d", * (int *)james.val);
+    // int a;
+    // //l[3];
+    // return 0;
+//}
 
 //     //  struct list *test = (struct list *)malloc(sizeof(struct list));
 //     //  struct l_node *node = (struct l_node *)malloc(sizeof(struct l_node));

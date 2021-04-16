@@ -132,7 +132,7 @@ expr:
   | ID LSQUARE args_opt RSQUARE { Call("list_index", Id($1) :: $3) }
   /* [1,2,3,4,5] 
   Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
-  | ID DOT PUSH_BACK LPAREN args_opt RPAREN { Call( "list_push_back", Id($1) :: $5 ) }
+  | ID DOT ID LPAREN args_opt RPAREN { Call( $3, Id($1) :: $5 ) }
 
 literal:
     ID { Id($1) }

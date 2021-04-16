@@ -4,16 +4,6 @@ open Sast
 
 module StringMap = Map.Make(String)
 
-type struct_built_in = {
-    members: A.bind list;
-    name: string;
-}
-
-let node_int = { members = [(A.Int, "key"); (A.Int, "val")];
-                 name = "node_int" }
-
-let built_in_structs = [node_int]
-
 let get_type(t, _) = t
 
 
@@ -35,6 +25,12 @@ let translate (globals, functions) =
   and float_t    = L.double_type context
   and void_t     = L.void_type   context 
   and void_ptr_t = L.pointer_type (L.i8_type context)
+   (*(match L.type_by_name llm_graph "struct.node_int" with
+      None -> raise (Failure "Missing implementation for struct node_int")
+    | Some t -> t) *)
+  and node_t  = L.pointer_type (match L.type_by_name llm_graph "struct.node" with
+      None -> raise (Failure "Missing implementation for struct node")
+    | Some t -> t)
   and lst_t      = L.pointer_type (match L.type_by_name llm_graph "struct.list" with
       None -> raise (Failure "Missing implementation for struct list")
     | Some t -> t)
@@ -47,11 +43,11 @@ let translate (globals, functions) =
     | A.String  -> string_t
     | A.Float   -> float_t
     | A.Void    -> void_t
-    | A.Node(t) -> L.struct_type context [| i32_t; ltype_of_typ t |]
+    | A.Node _  -> node_t
     | A.List _  -> lst_t
   in
 
-  let struct_map = 
+  (* let struct_map = 
     let struct_decl map sdecl =
       let name = sdecl.name
       and member_types = Array.of_list (List.map 
@@ -59,7 +55,7 @@ let translate (globals, functions) =
       let stype = L.struct_type context member_types in
       StringMap.add name (stype, sdecl.members) map in
     List.fold_left struct_decl StringMap.empty built_in_structs
-  in
+  in *)
 
 
 
@@ -87,13 +83,28 @@ let translate (globals, functions) =
   let list_init_f : L.llvalue =
       L.declare_function "list_init" list_init_t the_module in
 
+  let node_init_t : L.lltype = 
+      L.function_type node_t [| |] in
+  let node_init_f : L.llvalue =
+      L.declare_function "node_init" node_init_t the_module in
+
+  let node_idset_t : L.lltype = 
+      L.function_type void_t [| node_t ; i32_t|] in
+  let node_idset_f : L.llvalue =
+      L.declare_function "node_idset" node_idset_t the_module in
+
+  let node_valset_t : L.lltype = 
+      L.function_type void_t [| node_t ; void_ptr_t|] in
+  let node_valset_f : L.llvalue =
+      L.declare_function "node_valset" node_valset_t the_module in
+
   let list_push_back_t : L.lltype = 
-      L.function_type i32_t [|lst_t ; i32_t|] in
+      L.function_type i32_t [|lst_t ; i32_t; i32_t|] in
   let list_push_back_f : L.llvalue =
       L.declare_function "list_push_back" list_push_back_t the_module in
 
   let list_index_t : L.lltype =
-      L.function_type i32_t [|lst_t ; i32_t|] in  
+      L.function_type i32_t [|lst_t ; i32_t; i32_t|] in  
   let list_index_f : L.llvalue =
       L.declare_function "list_index" list_index_t the_module in
    (* let make_list_t = L.function_type lst_t [||] in
@@ -165,10 +176,11 @@ let translate (globals, functions) =
          Check local names first, then global names *)
       let lookup n = try StringMap.find n local_vars
                      with Not_found -> StringMap.find n global_vars
-      in
+      in 
+    
   
       (* Construct code for an expression; return its value *)
-      let rec expr builder ((_, e) : sexpr) = match e with
+      let rec expr builder ((expr_typ, e) : sexpr) = match e with
           SIlit i     -> L.const_int i32_t i
         | SFlit l     -> L.const_float_of_string float_t l
         | SSlit s     -> L.const_float_of_string float_t s 
@@ -206,12 +218,18 @@ let translate (globals, functions) =
 				  L.build_call list_push_back_float_func [|l'; e'|] "push_back_float" builder;
           | _ -> raise(Failure("not valid list type"))) in
           r *)
-        | SAssignField (x, s, e) -> let e' = expr builder e in let mem = 
+        | SAssignField (x, s, e) -> let e' = expr builder e in 
             (match s with
-              "id" -> 0
-            | "val" -> 1) in
-            let p = L.build_struct_gep (lookup x) mem "struct.ptr" builder in
+              "id" -> 
+              let str = L.build_load (lookup x) "struct" builder in
+              let p = L.build_struct_gep str 0 "struct.ptr" builder in
             ignore(L.build_store e' p builder); e'
+            | "val" -> let str = L.build_load (lookup x) "struct" builder in
+            let val_ptr = L.build_struct_gep str 1 "struct.ptr" builder in
+            let ty = ltype_of_typ expr_typ in
+            let cast = L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
+            ignore (L.build_store e' cast builder); e'
+            | _ -> raise (Failure "this should never happen, field error missed in semant"))
         | SBinop ((A.Float,_ ) as e1, op, e2) ->
       let e1' = expr builder e1
       and e2' = expr builder e2 in
@@ -262,10 +280,35 @@ let translate (globals, functions) =
       | SCall ("printf", [e]) -> 
 	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
-      | SCall ("list_push_back", [l; e]) ->
-    L.build_call list_push_back_f [| expr builder l; expr builder e |] "list_push_back" builder
-      | SCall ("list_index", [l; e]) -> 
-    L.build_call list_index_f [|expr builder l; expr builder e|] "list_index" builder
+      | SCall ("list_push_back", [(t,l); e]) -> let list_type = match t with
+          A.List(A.Int) -> L.const_int i32_t 1
+        | A.List(A.Float) -> L.const_int i32_t 2
+        | _ -> L.const_int (ltype_of_typ t) 0
+        in 
+
+
+
+      (* let l_ptr = expr builder l in
+let e_val = expr builder e in
+let n = idtostring l in
+let l_type = getListType (lookup_types n) in ( match l_type with
+let pqptr = expr builder p in let e_val = expr builder e in ignore (L.build_call pushPQ_f pqptr
+[| pqptr; e_val |] "" builder);
+A.String -> ignore(L.build_call addList_f [| l_ptr; e_val |] "" builder); l_ptr
+| _ ->
+let d_ltyp = L.type_of e_val in
+let d_ptr = L.build_malloc d_ltyp "tmp" builder in ignore(L.build_store e_val d_ptr builder);
+let void_e_ptr = L.build_bitcast d_ptr (L.pointer_type i8_t) "ptr" builder in
+ignore (L.build_call addList_f [| l_ptr ; void_e_ptr |] "" l_ptr
+) *)
+
+
+    L.build_call list_push_back_f [| expr builder (t, l); expr builder e; list_type |] "list_push_back" builder
+      | SCall ("list_index", [(t, l); e]) -> let list_type = match t with
+          A.List(A.Int) -> L.const_int i32_t 1
+        | A.List(A.Float) -> L.const_int i32_t 2
+        | _ -> L.const_int i32_t 0 in
+    L.build_call list_index_f [|expr builder (t, l); expr builder e; list_type|] "list_index" builder
       | SCall (f, args) ->
            let (fdef, fdecl) = StringMap.find f function_decls in
      let llargs = List.rev (List.map (expr builder) (List.rev args)) in
@@ -273,13 +316,35 @@ let translate (globals, functions) =
                           A.Void -> ""
                         | _ -> f ^ "_result") in
            L.build_call fdef (Array.of_list llargs) result builder
-      | SAccess (s, x) -> let mem = (match x with
-            "id" -> 0
-          | "val" -> 1) in
-          let p = L.build_struct_gep (lookup s) mem "struct.ptr" builder in
-          L.build_load p ("struct.val." ^ x) builder
+      | SAccess (s, x) -> 
+
+      (* let rec get_idx n lst i = match lst with 
+            [] -> raise (Failure("CODEGEN: id " ^ m ^ 
+                          " is not a member of struct " ^ A.string_of_expr s))
+          | h::t -> if (h = n) then i else get_idx n t (i+1)
+          in let idx = (get_idx m (List.map (fun (_,nm,_,_) -> nm) members) 0) in
+let ptr = L.build_struct_gep location idx ("struct.ptr") builder in L.build_load ptr ("struct.val."^m) builder
+       *)
+
+          (match x with
+            "id" -> (let str = L.build_load (lookup s) "struct" builder in 
+            let p = L.build_struct_gep str 0 "struct.ptr" builder in
+          L.build_load p ("struct.val." ^ x) builder)
+          | "val" -> let str = L.build_load (lookup s) "struct" builder in 
+          (let void_ptr = L.build_struct_gep str 1 "struct.ptr" builder in
+          let ty = ltype_of_typ expr_typ in
+          let cast = L.build_bitcast void_ptr (L.pointer_type ty) "cast" builder in
+          L.build_load cast ("struct.val." ^ x ^ ".value") builder))
       in
       
+
+
+
+      (* let v_pointer = L.build_call getData_f [| e_val |]
+"getData" builder in
+let l_dtyp = ltype_of_typ n_type in
+let d_ptr = L.build_bitcast v_pointer (L.pointer_type l_dtyp) "d_ptr" builder in
+(L.build_load d_ptr "d_ptr" builder) *)
     (* LLVM insists each basic block end with exactly one "terminator" 
        instruction that transfers control.  This function runs "instr builder"
        if the current block does not already have a terminator.  Used,
@@ -337,8 +402,11 @@ let translate (globals, functions) =
         | SFor (e1, e2, e3, body) -> stmt builder
         ( SBlock [SExpr e1 ; SWhile (e2, SBlock [body ; SExpr e3]) ] )
         | SDeclare(A.List(t), s, _) -> 
-            let ptr = L.build_call list_init_f [| |] "init" builder in
+            let ptr = L.build_call list_init_f [| |] "init_list" builder in
             ignore (L.build_store ptr (lookup s) builder); builder
+        | SDeclare(A.Node(t), s, _) ->
+            let ptr = L.build_call node_init_f [| |] "init_node" builder in
+            ignore (L.build_store ptr (lookup s) builder); builder 
         | SDeclare(_, _, a) -> ignore(expr builder a); builder
         
       in

@@ -1,4 +1,4 @@
-all : graphene.native graphene.o
+all : graphene.native graphene.o graphene.bc
 
 test : all testall.sh
 	./testall.sh
@@ -14,7 +14,9 @@ graphene.native :
 	opam config exec -- \
 	ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis,llvm.bitreader graphene.native
 
+graphene.bc : graphene.c
+	clang-10 -emit-llvm -o graphene.bc -c graphene.c
 
 clean :
 	ocamlbuild -clean
-	rm -rf testall.log ocamlllvm *.diff printbig.o graphene.o test-* fail-*
+	rm -rf testall.log ocamlllvm *.diff graphene.o test-* fail-* graphene.bc

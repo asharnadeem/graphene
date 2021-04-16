@@ -68,8 +68,9 @@ let check (globals, functions) =
       formals = [(t1, "x"); (t2, "y")];
       body = [] } map
       in List.fold_left add_bind2 built_in_decls_one [ (Int, "list_push_back", List(Int), Int);
-      (Int, "list_index", List(Int), Int)
+      (Int, "list_index", List(Int), Int;)
      ]
+    
   
   in
   (* adds unique function names to symbol table *)
@@ -181,6 +182,23 @@ let check (globals, functions) =
             | "id" ->
                 (check_assign Int rt err, SAssignField(x, s, (rt, e')))
             | _ -> raise (Failure (err)))
+      (* split generalized function into specific function *)
+      | Call("push_back", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+            List(Int) -> "list_push_back"
+          | _ -> raise (Failure "func not implemented for this kind of list")) in
+          let fd = find_func sub_func in
+          let param_length = List.length fd.formals in
+          if List.length el != param_length then
+            raise (Failure ("error: expecting " ^ string_of_int param_length ^
+                           " arguments in " ^ string_of_expr call))
+          else let check_call (ft, _) e =
+            let (et, e') = expr e in
+            let err = "error: illegal argument found " ^ string_of_typ et ^
+              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
+            in (check_assign ft et err, e')
+          in  
+          let args = List.map2 check_call fd.formals el
+          in (fd.typ, SCall(sub_func, args))
       | Call(f, el) as call -> 
           let fd = find_func f in
           let param_length = List.length fd.formals in
@@ -195,16 +213,11 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(f, args))
-     (* next line is placeholder, very incorrect *)
       | Access(x, s) -> let t = type_of_identifier x in (match t with
             Node(tn) -> if s = "val" then (tn, SAccess(x, s))
                         else if s = "id" then (Int, SAccess(x, s))
                         else raise (Failure ("error: invalid field"))
-          | _ -> raise (Failure ("error: this type does not have fields")))
-      (* | Index(l, i) -> check_list(l);
-				check_type(get_type(expr i), Int);
-          		(check_list_type(l), SIndex (expr l, expr i)) *)
-      (* | Index(_) -> raise (Failure ("error: only data structure of type list can be indexed")) *)
+          | _ -> raise (Failure ("error: this type does not have this field")))
       | Noexpr -> (Void, SNoexpr)
       | UEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
           with 
