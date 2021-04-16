@@ -58,17 +58,6 @@ let translate (globals, functions) =
     | A.Edge _  -> edge_t
   in
 
-  (* let struct_map = 
-    let struct_decl map sdecl =
-      let name = sdecl.name
-      and member_types = Array.of_list (List.map 
-          (fun (t, _) -> ltype_of_typ t) sdecl.members) in 
-      let stype = L.struct_type context member_types in
-      StringMap.add name (stype, sdecl.members) map in
-    List.fold_left struct_decl StringMap.empty built_in_structs
-  in *)
-
-
 
   (* Create a map of global variables after creating each *)
   let global_vars : L.llvalue StringMap.t =
@@ -359,13 +348,73 @@ let translate (globals, functions) =
             "cast" builder and
             cast2 = L.build_bitcast bedgep void_ptr_t
             "cast" builder in
-        L.build_call list_push_back_f 
-            [| n1ell; cast1|] "edge_push" builder;
+        ignore (L.build_call list_push_back_f 
+            [| n1ell; cast1|] "edge_push" builder);
         L.build_call list_push_back_f
             [| n2ell; cast2|] "edge_push" builder;
-      | SDEdgeC (n1, e, n2) -> raise (Failure "type of edge not yet implemented")
-      | SUEdge (n1, n2) -> raise (Failure "type of edge not yet implemented")
-      | SUEdgeC (n1, e, n2) -> raise (Failure "type of edge not yet implemented")
+      | SDEdgeC (n1, e, n2) -> let e' = expr builder e in 
+          let n1p = L.build_load (lookup n1) "node1" builder and                           
+              n2p = L.build_load (lookup n2) "node2" builder in
+          let fedgep = L.build_call edge_init_f
+          [|e'; n2p; L.const_int i32_t 1 |] 
+          "edge_init" builder and
+              bedgep = L.build_call edge_init_f
+          [|e'; n1p; L.const_int i32_t 0|] 
+          "edge_init" builder in  
+          let n1el = L.build_struct_gep n1p 2 "struct.ptr" builder and
+            n2el = L.build_struct_gep n2p 2 "struct.prt" builder in 
+          let n1ell = L.build_load n1el "temp" builder and
+            n2ell = L.build_load n2el "temp" builder in
+          let cast1 = L.build_bitcast fedgep void_ptr_t 
+            "cast" builder and
+            cast2 = L.build_bitcast bedgep void_ptr_t
+            "cast" builder in
+        ignore (L.build_call list_push_back_f 
+            [| n1ell; cast1|] "edge_push" builder);
+        L.build_call list_push_back_f
+            [| n2ell; cast2|] "edge_push" builder;
+      
+      | SUEdge (n1, n2) -> let n1p = L.build_load (lookup n1) "node1" builder and                           
+              n2p = L.build_load (lookup n2) "node2" builder in
+          let fedgep = L.build_call edge_init_f
+          [|L.const_int i32_t 0; n2p; L.const_int i32_t 1 |] 
+          "edge_init" builder and
+              bedgep = L.build_call edge_init_f
+          [|L.const_int i32_t 0; n1p; L.const_int i32_t 1|] 
+          "edge_init" builder in  
+          let n1el = L.build_struct_gep n1p 2 "struct.ptr" builder and
+            n2el = L.build_struct_gep n2p 2 "struct.prt" builder in 
+          let n1ell = L.build_load n1el "temp" builder and
+            n2ell = L.build_load n2el "temp" builder in
+          let cast1 = L.build_bitcast fedgep void_ptr_t 
+            "cast" builder and
+            cast2 = L.build_bitcast bedgep void_ptr_t
+            "cast" builder in
+        ignore (L.build_call list_push_back_f 
+            [| n1ell; cast1|] "edge_push" builder);
+        L.build_call list_push_back_f
+            [| n2ell; cast2|] "edge_push" builder;
+      | SUEdgeC (n1, e, n2) -> let e' = expr builder e in 
+          let n1p = L.build_load (lookup n1) "node1" builder and                           
+              n2p = L.build_load (lookup n2) "node2" builder in
+          let fedgep = L.build_call edge_init_f
+          [|e'; n2p; L.const_int i32_t 1 |] 
+          "edge_init" builder and
+              bedgep = L.build_call edge_init_f
+          [|e'; n1p; L.const_int i32_t 1|] 
+          "edge_init" builder in  
+          let n1el = L.build_struct_gep n1p 2 "struct.ptr" builder and
+            n2el = L.build_struct_gep n2p 2 "struct.prt" builder in 
+          let n1ell = L.build_load n1el "temp" builder and
+            n2ell = L.build_load n2el "temp" builder in
+          let cast1 = L.build_bitcast fedgep void_ptr_t 
+            "cast" builder and
+            cast2 = L.build_bitcast bedgep void_ptr_t
+            "cast" builder in
+        ignore (L.build_call list_push_back_f 
+            [| n1ell; cast1|] "edge_push" builder);
+        L.build_call list_push_back_f
+            [| n2ell; cast2|] "edge_push" builder;
       in
       
 
