@@ -58,7 +58,7 @@ let check (globals, functions) =
       body = [] } map
       in List.fold_left add_bind StringMap.empty [ ("print", Int);
       ("printf", Float);
-      ("printbig", Int);
+      
      ]
 
   in let built_in_decls = 
