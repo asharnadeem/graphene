@@ -1,0 +1,6 @@
+int main() {
+  node<int> a;
+  node<float> b;
+  a ~~ b;
+  return 0;
+}

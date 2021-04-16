@@ -58,7 +58,7 @@ void printbig(int c)
   } while (index & 0x7); 
 }
 
-int list_index(struct list *list, int index)
+void *list_index(struct list *list, int index)
 {
     int cur = 0;
 
@@ -78,7 +78,7 @@ int list_index(struct list *list, int index)
             cur++;
         }
     } 
-    return -1;
+    return 0;
 }
 
 struct list * list_init() {
@@ -94,7 +94,16 @@ struct node * node_init(){
     //printf("node_init");
     struct node *node = malloc(sizeof(struct node));
     node->val = malloc(sizeof(void *));
+    node->edges = malloc(sizeof(struct list *));
     return node;
+}
+
+struct edge * edge_init(int w, struct node * n, int tr) {
+    struct edge *edge = malloc(sizeof(struct edge));
+    edge->weight = w;
+    edge->node = n;
+    edge->t = tr;
+    return edge;
 }
 
 void node_idset(struct node *node, int id) {
@@ -105,13 +114,13 @@ void node_valset(struct node *node, void *val) {
   node->val = val;
 }
 
-int list_push_back(struct list *list, int element)
+int list_push_back(struct list *list, void *element)
 {
 
     struct l_node *node = (struct l_node *)malloc(sizeof(struct l_node));
 
     node->next = NULL;
-    (*node).element = element;
+    node->element = element;
 
     if (list->head == NULL)
     {
@@ -121,6 +130,7 @@ int list_push_back(struct list *list, int element)
     }
 
     struct l_node *tmp = list->head;
+
     while (tmp->next != NULL)
     {
         tmp = tmp->next;
@@ -132,10 +142,10 @@ int list_push_back(struct list *list, int element)
 }
 
 //  int main(){
-//     struct node_int james;
-//     james.val = 20;
-//     james.id = 22;
-//     printf("%d, %d", james.id, james.val); }
+//     struct node james;
+//     james.id = 20;
+//     james.val = NULL;
+//     printf("%d, %d", james.id, james.id); }
 
 //     struct list * test = list_init();
 //     list_push_back(test, 20);

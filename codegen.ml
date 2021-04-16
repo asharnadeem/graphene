@@ -6,6 +6,13 @@ module StringMap = Map.Make(String)
 
 let get_type(t, _) = t
 
+(* TODO: returning a variable doesn't work?
+         need to figure out how to check null ptr for indexing out of bounds 
+         other types of edges (basically copy what I did for dedge) 
+         graphs
+         some way to print edges?
+         cleaup
+         DONE???? *)
 
 (* translate : Sast.program -> Llvm.module *)
 let translate (globals, functions) =
@@ -34,6 +41,9 @@ let translate (globals, functions) =
   and lst_t      = L.pointer_type (match L.type_by_name llm_graph "struct.list" with
       None -> raise (Failure "Missing implementation for struct list")
     | Some t -> t)
+  and edge_t  = L.pointer_type (match L.type_by_name llm_graph "struct.edge" with
+      None -> raise (Failure "Missing implementation for struct edge")
+    | Some t -> t)
   in
   
 
@@ -45,6 +55,7 @@ let translate (globals, functions) =
     | A.Void    -> void_t
     | A.Node _  -> node_t
     | A.List _  -> lst_t
+    | A.Edge _  -> edge_t
   in
 
   (* let struct_map = 
@@ -88,6 +99,11 @@ let translate (globals, functions) =
   let node_init_f : L.llvalue =
       L.declare_function "node_init" node_init_t the_module in
 
+  let edge_init_t : L.lltype = 
+      L.function_type edge_t [| i32_t; node_t; i32_t |] in
+  let edge_init_f : L.llvalue = 
+      L.declare_function "edge_init" edge_init_t the_module in
+
   let node_idset_t : L.lltype = 
       L.function_type void_t [| node_t ; i32_t|] in
   let node_idset_f : L.llvalue =
@@ -99,12 +115,12 @@ let translate (globals, functions) =
       L.declare_function "node_valset" node_valset_t the_module in
 
   let list_push_back_t : L.lltype = 
-      L.function_type i32_t [|lst_t ; i32_t; i32_t|] in
+      L.function_type i32_t [|lst_t ; void_ptr_t|] in
   let list_push_back_f : L.llvalue =
       L.declare_function "list_push_back" list_push_back_t the_module in
 
   let list_index_t : L.lltype =
-      L.function_type i32_t [|lst_t ; i32_t; i32_t|] in  
+      L.function_type void_ptr_t [|lst_t ; i32_t|] in  
   let list_index_f : L.llvalue =
       L.declare_function "list_index" list_index_t the_module in
    (* let make_list_t = L.function_type lst_t [||] in
@@ -229,6 +245,10 @@ let translate (globals, functions) =
             let ty = ltype_of_typ expr_typ in
             let cast = L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
             ignore (L.build_store e' cast builder); e'
+            | "edges" -> 
+              let str = L.build_load (lookup x) "struct" builder in 
+              let p = L.build_struct_gep str 2 "struct.ptr" builder in
+              ignore(L.build_store e' p builder); e'
             | _ -> raise (Failure "this should never happen, field error missed in semant"))
         | SBinop ((A.Float,_ ) as e1, op, e2) ->
       let e1' = expr builder e1
@@ -280,35 +300,29 @@ let translate (globals, functions) =
       | SCall ("printf", [e]) -> 
 	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
-      | SCall ("list_push_back", [(t,l); e]) -> let list_type = match t with
+       | SCall ("list_push_back", [(List(t),l); e]) -> (*let list_type = match t with
           A.List(A.Int) -> L.const_int i32_t 1
         | A.List(A.Float) -> L.const_int i32_t 2
         | _ -> L.const_int (ltype_of_typ t) 0
-        in 
-
-
-
-      (* let l_ptr = expr builder l in
-let e_val = expr builder e in
-let n = idtostring l in
-let l_type = getListType (lookup_types n) in ( match l_type with
-let pqptr = expr builder p in let e_val = expr builder e in ignore (L.build_call pushPQ_f pqptr
-[| pqptr; e_val |] "" builder);
-A.String -> ignore(L.build_call addList_f [| l_ptr; e_val |] "" builder); l_ptr
-| _ ->
-let d_ltyp = L.type_of e_val in
-let d_ptr = L.build_malloc d_ltyp "tmp" builder in ignore(L.build_store e_val d_ptr builder);
-let void_e_ptr = L.build_bitcast d_ptr (L.pointer_type i8_t) "ptr" builder in
-ignore (L.build_call addList_f [| l_ptr ; void_e_ptr |] "" l_ptr
-) *)
-
-
-    L.build_call list_push_back_f [| expr builder (t, l); expr builder e; list_type |] "list_push_back" builder
-      | SCall ("list_index", [(t, l); e]) -> let list_type = match t with
-          A.List(A.Int) -> L.const_int i32_t 1
-        | A.List(A.Float) -> L.const_int i32_t 2
-        | _ -> L.const_int i32_t 0 in
-    L.build_call list_index_f [|expr builder (t, l); expr builder e; list_type|] "list_index" builder
+        in  *)
+        let e' = expr builder e in
+        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        ignore (L.build_store e' ptr builder); 
+        let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
+    L.build_call list_push_back_f 
+      [| expr builder (t, l); cast|] "list_push_back" builder
+      | SCall ("list_index", [(List(t), l); e]) -> 
+        let ptr = (L.build_call list_index_f 
+          [|expr builder (List(t), l); expr builder e |] "list_index" builder)
+          and ty = (L.pointer_type (ltype_of_typ t)) in 
+              if L.is_null ptr then (
+                raise (Failure "HERE") )
+                (* match t with
+                A.Int -> L.const_int i32_t 0
+              | A.Float -> L.const_float float_t 0.0 
+              | _ -> raise (Failure "NULL not implemented for this list index")) *)
+          else (let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder)
       | SCall (f, args) ->
            let (fdef, fdecl) = StringMap.find f function_decls in
      let llargs = List.rev (List.map (expr builder) (List.rev args)) in
@@ -317,15 +331,6 @@ ignore (L.build_call addList_f [| l_ptr ; void_e_ptr |] "" l_ptr
                         | _ -> f ^ "_result") in
            L.build_call fdef (Array.of_list llargs) result builder
       | SAccess (s, x) -> 
-
-      (* let rec get_idx n lst i = match lst with 
-            [] -> raise (Failure("CODEGEN: id " ^ m ^ 
-                          " is not a member of struct " ^ A.string_of_expr s))
-          | h::t -> if (h = n) then i else get_idx n t (i+1)
-          in let idx = (get_idx m (List.map (fun (_,nm,_,_) -> nm) members) 0) in
-let ptr = L.build_struct_gep location idx ("struct.ptr") builder in L.build_load ptr ("struct.val."^m) builder
-       *)
-
           (match x with
             "id" -> (let str = L.build_load (lookup s) "struct" builder in 
             let p = L.build_struct_gep str 0 "struct.ptr" builder in
@@ -334,7 +339,33 @@ let ptr = L.build_struct_gep location idx ("struct.ptr") builder in L.build_load
           (let void_ptr = L.build_struct_gep str 1 "struct.ptr" builder in
           let ty = ltype_of_typ expr_typ in
           let cast = L.build_bitcast void_ptr (L.pointer_type ty) "cast" builder in
-          L.build_load cast ("struct.val." ^ x ^ ".value") builder))
+          L.build_load cast ("struct.val." ^ x ^ ".value") builder)
+          | "edges" -> let str = L.build_load (lookup s) "struct" builder in
+            let p = L.build_struct_gep str 2 "struct.ptr" builder in
+            L.build_load p ("struct.val." ^ x ) builder)
+      | SDEdge (n1, n2) -> let n1p = L.build_load (lookup n1) "node1" builder and
+                               n2p = L.build_load (lookup n2) "node2" builder in
+         let fedgep = L.build_call edge_init_f
+          [|L.const_int i32_t 0; n2p; L.const_int i32_t 1 |] 
+          "edge_init" builder and
+            bedgep = L.build_call edge_init_f
+          [|L.const_int i32_t 0; n1p; L.const_int i32_t 0|] 
+          "edge_init" builder in  
+        let n1el = L.build_struct_gep n1p 2 "struct.ptr" builder and
+            n2el = L.build_struct_gep n2p 2 "struct.prt" builder in 
+        let n1ell = L.build_load n1el "temp" builder and
+            n2ell = L.build_load n2el "temp" builder in
+        let cast1 = L.build_bitcast fedgep void_ptr_t 
+            "cast" builder and
+            cast2 = L.build_bitcast bedgep void_ptr_t
+            "cast" builder in
+        L.build_call list_push_back_f 
+            [| n1ell; cast1|] "edge_push" builder;
+        L.build_call list_push_back_f
+            [| n2ell; cast2|] "edge_push" builder;
+      | SDEdgeC (n1, e, n2) -> raise (Failure "type of edge not yet implemented")
+      | SUEdge (n1, n2) -> raise (Failure "type of edge not yet implemented")
+      | SUEdgeC (n1, e, n2) -> raise (Failure "type of edge not yet implemented")
       in
       
 
@@ -345,6 +376,7 @@ let ptr = L.build_struct_gep location idx ("struct.ptr") builder in L.build_load
 let l_dtyp = ltype_of_typ n_type in
 let d_ptr = L.build_bitcast v_pointer (L.pointer_type l_dtyp) "d_ptr" builder in
 (L.build_load d_ptr "d_ptr" builder) *)
+
     (* LLVM insists each basic block end with exactly one "terminator" 
        instruction that transfers control.  This function runs "instr builder"
        if the current block does not already have a terminator.  Used,
@@ -405,6 +437,7 @@ let d_ptr = L.build_bitcast v_pointer (L.pointer_type l_dtyp) "d_ptr" builder in
             let ptr = L.build_call list_init_f [| |] "init_list" builder in
             ignore (L.build_store ptr (lookup s) builder); builder
         | SDeclare(A.Node(t), s, _) ->
+          (* INIT EDGELIST HERE *)
             let ptr = L.build_call node_init_f [| |] "init_node" builder in
             ignore (L.build_store ptr (lookup s) builder); builder 
         | SDeclare(_, _, a) -> ignore(expr builder a); builder

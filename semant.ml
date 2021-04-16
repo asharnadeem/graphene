@@ -170,8 +170,8 @@ let check (globals, functions) =
           let err = "error: illegal assignment " ^ string_of_typ lt ^ " = " ^
                     string_of_typ rt ^ " in " ^ string_of_expr ex
           in (check_assign lt rt err, SAssign(x, (rt, e')))
-      | AssignField(x, s, e) as ex -> let lt = (match type_of_identifier x with
-              Node(t) -> t
+      | AssignField(x, s, e) as ex -> let (lt, it) = (match type_of_identifier x with
+              Node(t) -> t, List(Int)
             | _ -> raise (Failure ("error: cannot access this type")))
           and (rt, e') = expr e in
           let err = "error: illegal assignment " ^ string_of_typ lt ^ " = "
@@ -181,6 +181,8 @@ let check (globals, functions) =
                 (check_assign lt rt err, SAssignField(x, s, (rt, e')))
             | "id" ->
                 (check_assign Int rt err, SAssignField(x, s, (rt, e')))
+            | "edges" -> 
+                (check_assign it rt err, SAssignField(x, s, (rt, e')))
             | _ -> raise (Failure (err)))
       (* split generalized function into specific function *)
       | Call("push_back", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
@@ -214,10 +216,12 @@ let check (globals, functions) =
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(f, args))
       | Access(x, s) -> let t = type_of_identifier x in (match t with
-            Node(tn) -> if s = "val" then (tn, SAccess(x, s))
-                        else if s = "id" then (Int, SAccess(x, s))
-                        else raise (Failure ("error: invalid field"))
-          | _ -> raise (Failure ("error: this type does not have this field")))
+            Node(tn) -> (match s with 
+                "val" -> (tn, SAccess(x, s))
+              | "id"  -> (Int, SAccess(x, s))
+              | "edges" -> (List(Edge(Int)), SAccess(x, s))
+              | _ -> raise (Failure ("error: invalid field")))
+          | _ -> raise (Failure ("error: this type does not have this field: " ^ s)))
       | Noexpr -> (Void, SNoexpr)
       | UEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
           with 

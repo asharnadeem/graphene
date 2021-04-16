@@ -2,5 +2,10 @@ int main() {
   node<float> a;
   node<float> b;
   b ~>> a;
+  list<edge <int> > t;
+  t = a.edges;
+  list<edge <int> > s = a.edges;
+  a.val = 0.0;
+  printf(a.val);
   return 0;
 }

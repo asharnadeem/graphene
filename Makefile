@@ -1,4 +1,4 @@
-all : graphene.native graphene.o graphene.bc
+all : clean graphene.native graphene.o graphene.bc test
 
 test : all testall.sh
 	./testall.sh
