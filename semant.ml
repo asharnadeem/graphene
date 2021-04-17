@@ -56,9 +56,9 @@ let check (globals, functions) =
       fname = name;
       formals = [(t, "x")];
       body = [] } map
-      in List.fold_left add_bind StringMap.empty [ ("print", Int);
-      ("printf", Float);
-      
+      in List.fold_left add_bind StringMap.empty [ 
+        ("print", Int);
+        ("printf", Float);
      ]
 
   in let built_in_decls = 
@@ -67,8 +67,11 @@ let check (globals, functions) =
       fname = name;
       formals = [(t1, "x"); (t2, "y")];
       body = [] } map
-      in List.fold_left add_bind2 built_in_decls_one [ (Int, "list_push_back", List(Int), Int);
-      (Int, "list_index", List(Int), Int;)
+      in List.fold_left add_bind2 built_in_decls_one [ 
+        (Int, "list_index", List(Int), Int;);
+        (Int, "list_push_back", List(Int), Int);
+        (Int, "list_push_front", List(Int), Int);
+        (Void, "graph_add_node", Graph(Node(Int)), Node(Int));
      ]
     
   
@@ -187,7 +190,39 @@ let check (globals, functions) =
       (* split generalized function into specific function *)
       | Call("push_back", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
             List(Int) -> "list_push_back"
-          | _ -> raise (Failure "func not implemented for this kind of list")) in
+          | _ -> raise (Failure ("error: push_back not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          let fd = find_func sub_func in
+          let param_length = List.length fd.formals in
+          if List.length el != param_length then
+            raise (Failure ("error: expecting " ^ string_of_int param_length ^
+                           " arguments in " ^ string_of_expr call))
+          else let check_call (ft, _) e =
+            let (et, e') = expr e in
+            let err = "error: illegal argument found " ^ string_of_typ et ^
+              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
+            in (check_assign ft et err, e')
+          in  
+          let args = List.map2 check_call fd.formals el
+          in (fd.typ, SCall(sub_func, args))
+      | Call("push_front", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+            List(Int) -> "list_push_front"
+          | _ -> raise (Failure ("error: push_front not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          let fd = find_func sub_func in
+          let param_length = List.length fd.formals in
+          if List.length el != param_length then
+            raise (Failure ("error: expecting " ^ string_of_int param_length ^
+                           " arguments in " ^ string_of_expr call))
+          else let check_call (ft, _) e =
+            let (et, e') = expr e in
+            let err = "error: illegal argument found " ^ string_of_typ et ^
+              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
+            in (check_assign ft et err, e')
+          in  
+          let args = List.map2 check_call fd.formals el
+          in (fd.typ, SCall(sub_func, args))
+      | Call("add_node", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+            Graph(Node(Int)) -> "graph_add_node"
+          | _ -> raise (Failure ("error: add_node not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -243,11 +278,6 @@ let check (globals, functions) =
                            (Node(a), Node(b)) when a = b -> 
                               (Edge(Node(a)), SDEdgeC(n1, expr e, n2))
                          | _ -> raise (Failure ("error: DEdgeC fail")))
-      (* | List_Push_Back(l, e) -> check_list(l);
-				valid_element_type(expr e);
-				(Void, SList_Push_Back (expr l, expr e)) *)
-
-
     in
 
     let check_bool_expr e =

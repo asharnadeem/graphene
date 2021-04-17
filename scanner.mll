@@ -60,8 +60,6 @@ rule token = parse
   | "continue"            { CONTINUE }
   | "break"               { BREAK }
 
-(* list functions
-  |"push_back"           { PUSH_BACK }*)
 (* literals *)
   | '\"' ([^'\"']* as str) '\"' { SLIT(str) }
   | digits as num { LITERAL(int_of_string num) }

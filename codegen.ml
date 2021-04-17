@@ -32,30 +32,31 @@ let translate (globals, functions) =
   and float_t    = L.double_type context
   and void_t     = L.void_type   context 
   and void_ptr_t = L.pointer_type (L.i8_type context)
-   (*(match L.type_by_name llm_graph "struct.node_int" with
-      None -> raise (Failure "Missing implementation for struct node_int")
-    | Some t -> t) *)
-  and node_t  = L.pointer_type (match L.type_by_name llm_graph "struct.node" with
-      None -> raise (Failure "Missing implementation for struct node")
-    | Some t -> t)
   and lst_t      = L.pointer_type (match L.type_by_name llm_graph "struct.list" with
-      None -> raise (Failure "Missing implementation for struct list")
+      None -> raise (Failure "error: missing implementation for struct list")
+    | Some t -> t)
+  and node_t  = L.pointer_type (match L.type_by_name llm_graph "struct.node" with
+      None -> raise (Failure "error: missing implementation for struct node")
     | Some t -> t)
   and edge_t  = L.pointer_type (match L.type_by_name llm_graph "struct.edge" with
-      None -> raise (Failure "Missing implementation for struct edge")
+      None -> raise (Failure "error: missing implementation for struct edge")
+    | Some t -> t)
+  and graph_t      = L.pointer_type (match L.type_by_name llm_graph "struct.graph" with
+      None -> raise (Failure "error: missing implementation for struct graph")
     | Some t -> t)
   in
   
 
    (* Return the LLVM type for a Graphene type *)
   let rec ltype_of_typ = function
-      A.Int     -> i32_t
-    | A.String  -> string_t
-    | A.Float   -> float_t
-    | A.Void    -> void_t
-    | A.Node _  -> node_t
-    | A.List _  -> lst_t
-    | A.Edge _  -> edge_t
+      A.Int      -> i32_t
+    | A.String   -> string_t
+    | A.Float    -> float_t
+    | A.Void     -> void_t
+    | A.Node _   -> node_t
+    | A.List _   -> lst_t
+    | A.Edge _   -> edge_t
+    | A.Graph _  -> graph_t
   in
 
 
@@ -88,39 +89,40 @@ let translate (globals, functions) =
   let edge_init_f : L.llvalue = 
       L.declare_function "edge_init" edge_init_t the_module in
 
-  let node_idset_t : L.lltype = 
-      L.function_type void_t [| node_t ; i32_t|] in
-  let node_idset_f : L.llvalue =
-      L.declare_function "node_idset" node_idset_t the_module in
-
-  let node_valset_t : L.lltype = 
-      L.function_type void_t [| node_t ; void_ptr_t|] in
-  let node_valset_f : L.llvalue =
-      L.declare_function "node_valset" node_valset_t the_module in
-
-  let list_push_back_t : L.lltype = 
-      L.function_type i32_t [|lst_t ; void_ptr_t|] in
-  let list_push_back_f : L.llvalue =
-      L.declare_function "list_push_back" list_push_back_t the_module in
+  let graph_init_t : L.lltype = 
+      L.function_type graph_t [| |] in
+  let graph_init_f : L.llvalue =
+      L.declare_function "graph_init" graph_init_t the_module in
 
   let list_index_t : L.lltype =
       L.function_type void_ptr_t [|lst_t ; i32_t|] in  
   let list_index_f : L.llvalue =
       L.declare_function "list_index" list_index_t the_module in
-   (* let make_list_t = L.function_type lst_t [||] in
-  let make_list_func = L.declare_function "make_list" make_list_t the_module in
 
-  let list_index_t = L.function_type i32_t [| lst_t; void_ptr_t |] in
-  let list_index_func = L.declare_function "index" list_index_t the_module in
+  let list_push_back_t : L.lltype = 
+      L.function_type i32_t [| lst_t ; void_ptr_t |] in
+  let list_push_back_f : L.llvalue =
+      L.declare_function "list_push_back" list_push_back_t the_module in
 
-  let list_push_back_t = L.function_type i32_t [| lst_t; void_ptr_t |] in
-  let list_push_back_func = L.declare_function "push_back" list_push_back_t the_module in
+  let list_push_front_t : L.lltype = 
+      L.function_type i32_t [| lst_t ; void_ptr_t |] in
+  let list_push_front_f : L.llvalue =
+      L.declare_function "list_push_front" list_push_front_t the_module in
 
-  let list_push_back_int_t = L.function_type i32_t [| lst_t; i32_t |] in
-  let list_push_back_int_func = L.declare_function "push_back_int" list_push_back_int_t the_module in
+  let node_set_id_t : L.lltype = 
+      L.function_type void_t [| node_t ; i32_t|] in
+  let node_set_id_f : L.llvalue =
+      L.declare_function "node_set_id" node_set_id_t the_module in
 
-  let list_push_back_float_t = L.function_type float_t [| lst_t; float_t |] in
-  let list_push_back_float_func = L.declare_function "push_back_int" list_push_back_int_t the_module in  *)
+  let node_set_val_t : L.lltype = 
+      L.function_type void_t [| node_t ; void_ptr_t|] in
+  let node_set_val_f : L.llvalue =
+      L.declare_function "node_set_val" node_set_val_t the_module in
+
+  let graph_add_node_t : L.lltype = 
+      L.function_type void_t [| graph_t ; node_t |] in
+  let graph_add_node_f : L.llvalue =
+      L.declare_function "graph_add_node" graph_add_node_t the_module in
 
   (* Define each function (arguments and return type) so we can 
      call it even before we've created its body *)
@@ -188,36 +190,6 @@ let translate (globals, functions) =
         | SId s       -> L.build_load (lookup s) s builder
         | SAssign (s, e) -> let e' = expr builder e in
                             ignore(L.build_store e' (lookup s) builder); e'
-        (* | SListLit l -> let rec list_fill lst = (function
-        [] -> lst
-        | sx :: rest ->
-        let (t, _) = sx in 
-        let data = (match t with
-          A.List _ -> expr builder sx 
-          | _ -> let data = L.build_malloc (ltype_of_typ t) "data" builder in
-            let llvm =  expr builder sx 
-            in ignore(L.build_store llvm data builder); data)
-        in let data = L.build_bitcast data void_ptr_t "data" builder in
-          ignore(L.build_call list_push_back_func [| lst; data |] "list_push_back" builder); list_fill lst rest) in
-        let m = L.build_call make_list_func [||] "make_list" builder in
-        list_fill m l *)
-        (* | SIndex(l, e) ->
-          let ltype = ltype_of_typ fdecl.styp in
-          let lst = expr builder l in
-          let index = expr builder e in
-          let data = L.build_call list_index_func [| lst; index |] "index" builder in
-            (match fdecl.styp with 
-            A.Int -> L.build_bitcast data ltype "data" builder
-            | _ -> let data = L.build_bitcast data (L.pointer_type ltype) "data" builder in
-              L.build_load data "data" builder) *)
-
-        (* | SList_Push_Back(l, e) -> let r = (match get_type(e) with
-			    A.Int -> let l' = expr builder l and e' = expr builder e in
-				  L.build_call list_push_back_int_func [|l'; e'|] "push_back_int" builder;
-			    | A.Float -> let l' = expr builder l and e' = expr builder e in
-				  L.build_call list_push_back_float_func [|l'; e'|] "push_back_float" builder;
-          | _ -> raise(Failure("not valid list type"))) in
-          r *)
         | SAssignField (x, s, e) -> let e' = expr builder e in 
             (match s with
               "id" -> 
@@ -282,17 +254,6 @@ let translate (globals, functions) =
       | SCall ("printf", [e]) -> 
 	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
-       | SCall ("list_push_back", [(List(t),l); e]) -> (*let list_type = match t with
-          A.List(A.Int) -> L.const_int i32_t 1
-        | A.List(A.Float) -> L.const_int i32_t 2
-        | _ -> L.const_int (ltype_of_typ t) 0
-        in  *)
-        let e' = expr builder e in
-        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
-        ignore (L.build_store e' ptr builder); 
-        let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
-    L.build_call list_push_back_f 
-      [| expr builder (t, l); cast|] "list_push_back" builder
       | SCall ("list_index", [(List(t), l); e]) -> 
         let ptr = (L.build_call list_index_f 
           [|expr builder (List(t), l); expr builder e |] "list_index" builder)
@@ -305,6 +266,35 @@ let translate (globals, functions) =
               | _ -> raise (Failure "NULL not implemented for this list index")) *)
           else (let cast = L.build_bitcast ptr ty "cast" builder in 
         L.build_load cast "val" builder)
+      | SCall ("list_push_back", [(A.List(t),l); e]) -> (*let list_type = match t with
+          A.List(A.Int) -> L.const_int i32_t 1
+        | A.List(A.Float) -> L.const_int i32_t 2
+        | _ -> L.const_int (ltype_of_typ t) 0
+        in  *)
+        let e' = expr builder e in
+        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        ignore (L.build_store e' ptr builder); 
+        let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
+          L.build_call list_push_back_f 
+          [| expr builder (t, l); cast|] "list_push_back" builder
+      | SCall ("list_push_front", [(A.List(t),l); e]) -> (*let list_type = match t with
+          A.List(A.Int) -> L.const_int i32_t 1
+        | A.List(A.Float) -> L.const_int i32_t 2
+        | _ -> L.const_int (ltype_of_typ t) 0
+        in  *)
+        let e' = expr builder e in
+        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        ignore (L.build_store e' ptr builder); 
+        let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
+           L.build_call list_push_front_f 
+          [| expr builder (t, l); cast|] "list_push_front" builder
+      | SCall ("graph_add_node", [(A.Graph(t),l); e]) ->
+        let e' = expr builder e in
+        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        ignore (L.build_store e' ptr builder); 
+        let cast = L.build_bitcast ptr node_t "cast" builder in
+           L.build_call graph_add_node_f 
+          [| expr builder (t, l)|] "graph_add_node" builder
       | SCall (f, args) ->
            let (fdef, fdecl) = StringMap.find f function_decls in
      let llargs = List.rev (List.map (expr builder) (List.rev args)) in
@@ -410,15 +400,6 @@ let translate (globals, functions) =
             [| n2ell; cast2|] "edge_push" builder;
       in
       
-
-
-
-      (* let v_pointer = L.build_call getData_f [| e_val |]
-"getData" builder in
-let l_dtyp = ltype_of_typ n_type in
-let d_ptr = L.build_bitcast v_pointer (L.pointer_type l_dtyp) "d_ptr" builder in
-(L.build_load d_ptr "d_ptr" builder) *)
-
     (* LLVM insists each basic block end with exactly one "terminator" 
        instruction that transfers control.  This function runs "instr builder"
        if the current block does not already have a terminator.  Used,
@@ -477,6 +458,9 @@ let d_ptr = L.build_bitcast v_pointer (L.pointer_type l_dtyp) "d_ptr" builder in
         ( SBlock [SExpr e1 ; SWhile (e2, SBlock [body ; SExpr e3]) ] )
         | SDeclare(A.List(t), s, _) -> 
             let ptr = L.build_call list_init_f [| |] "init_list" builder in
+            ignore (L.build_store ptr (lookup s) builder); builder
+        | SDeclare(A.Graph(t), s, _) -> 
+            let ptr = L.build_call graph_init_f [| |] "init_graph" builder in
             ignore (L.build_store ptr (lookup s) builder); builder
         | SDeclare(A.Node(t), s, _) ->
           (* INIT EDGELIST HERE *)

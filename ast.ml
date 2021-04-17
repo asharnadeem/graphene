@@ -32,15 +32,6 @@ type expr =
   | Slit of string
   | Flit of string 
   | Id of string
-  | ListLit of expr list 
-  (* | NodeLit of expr
-  | GraphLit of ?
-  ...
-   
-  | UEdgeC of string * expr * string
-  | DEdge of string * string
-  | DEdgeC of string * expr * string
-  *)
   | Unop of unop * expr
   | Binop of expr * binop * expr
   | Assign of string * expr
@@ -53,7 +44,6 @@ type expr =
   | UEdgeC of string * expr * string
   | DEdge of string * string
   | DEdgeC of string * expr * string
-  (* | List_Push_Back of expr * expr *)
 
 type bind = typ * string
 
@@ -136,8 +126,6 @@ let rec string_of_expr = function
   | UEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_expr e ^ ")~ " ^ n2
   | DEdge(n1, n2) -> n1 ^ " ~> " ^ n2
   | DEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_expr e ^ ")>> " ^ n2
-  | ListLit(l) -> "[" ^ String.concat "," (List.map string_of_expr l) ^ "]" 
-  (* | List_Push_Back(l, e) -> string_of_expr l ^ ".push_back(" ^ string_of_expr e ^ ")" *)
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"

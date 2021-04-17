@@ -1,4 +1,4 @@
-/* HERE Ocamlyacc parser for Graphene */
+/* Ocamlyacc parser for Graphene */
 
 %{ open Ast %}
 
@@ -7,7 +7,6 @@
 %token TILDE DIREDGE UNDIREDGE DGT
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID
-%token PUSH_BACK
 %token <int> LITERAL
 %token <string> FLIT
 %token <string> SLIT
@@ -27,7 +26,6 @@
 %left PLUS MINUS
 %left TIMES DIVIDE MOD
 %right NOT
-%right PUSH_BACK
 
 %%
 
@@ -59,10 +57,10 @@ typ:
     INT    { Int }
   | FLOAT  { Float }
   | STRING { String }
-  | GRAPH LT typ GT  { Graph($3) }
   | NODE  LT typ GT { Node($3) }
   | EDGE  LT typ GT { Edge($3) }
   | LIST  LT typ GT { List($3) }
+  | GRAPH LT typ GT  { Graph($3) }
   | VOID   { Void }
 
 vdecl:
@@ -126,8 +124,6 @@ expr:
   | ID TILDE LPAREN literal RPAREN DGT ID { DEdgeC($1, $4, $7) }
   /* node.id */ 
   | ID DOT ID { Access($1, $3) } 
-  /* graph.getNode(key) 
-  | ID DOT ID LPAREN args_opt RPAREN { Call(Access($1, $3), $5) }*/
   /* queue[3] */
   | ID LSQUARE args_opt RSQUARE { Call("list_index", Id($1) :: $3) }
   /* [1,2,3,4,5] 

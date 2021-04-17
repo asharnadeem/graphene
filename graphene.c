@@ -2,122 +2,39 @@
 #include <stdio.h>
 #include "graphene.h"
 
-static const char font[] = {
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x1c, 0x3e, 0x61, 0x41, 0x43, 0x3e, 0x1c, 0x00,
-  0x00, 0x40, 0x42, 0x7f, 0x7f, 0x40, 0x40, 0x00,
-  0x62, 0x73, 0x79, 0x59, 0x5d, 0x4f, 0x46, 0x00,
-  0x20, 0x61, 0x49, 0x4d, 0x4f, 0x7b, 0x31, 0x00,
-  0x18, 0x1c, 0x16, 0x13, 0x7f, 0x7f, 0x10, 0x00,
-  0x27, 0x67, 0x45, 0x45, 0x45, 0x7d, 0x38, 0x00,
-  0x3c, 0x7e, 0x4b, 0x49, 0x49, 0x79, 0x30, 0x00,
-  0x03, 0x03, 0x71, 0x79, 0x0d, 0x07, 0x03, 0x00,
-  0x36, 0x4f, 0x4d, 0x59, 0x59, 0x76, 0x30, 0x00,
-  0x06, 0x4f, 0x49, 0x49, 0x69, 0x3f, 0x1e, 0x00,
-  0x7c, 0x7e, 0x13, 0x11, 0x13, 0x7e, 0x7c, 0x00,
-  0x7f, 0x7f, 0x49, 0x49, 0x49, 0x7f, 0x36, 0x00,
-  0x1c, 0x3e, 0x63, 0x41, 0x41, 0x63, 0x22, 0x00,
-  0x7f, 0x7f, 0x41, 0x41, 0x63, 0x3e, 0x1c, 0x00,
-  0x00, 0x7f, 0x7f, 0x49, 0x49, 0x49, 0x41, 0x00,
-  0x7f, 0x7f, 0x09, 0x09, 0x09, 0x09, 0x01, 0x00,
-  0x1c, 0x3e, 0x63, 0x41, 0x49, 0x79, 0x79, 0x00,
-  0x7f, 0x7f, 0x08, 0x08, 0x08, 0x7f, 0x7f, 0x00,
-  0x00, 0x41, 0x41, 0x7f, 0x7f, 0x41, 0x41, 0x00,
-  0x20, 0x60, 0x40, 0x40, 0x40, 0x7f, 0x3f, 0x00,
-  0x7f, 0x7f, 0x18, 0x3c, 0x76, 0x63, 0x41, 0x00,
-  0x00, 0x7f, 0x7f, 0x40, 0x40, 0x40, 0x40, 0x00,
-  0x7f, 0x7f, 0x0e, 0x1c, 0x0e, 0x7f, 0x7f, 0x00,
-  0x7f, 0x7f, 0x0e, 0x1c, 0x38, 0x7f, 0x7f, 0x00,
-  0x3e, 0x7f, 0x41, 0x41, 0x41, 0x7f, 0x3e, 0x00,
-  0x7f, 0x7f, 0x11, 0x11, 0x11, 0x1f, 0x0e, 0x00,
-  0x3e, 0x7f, 0x41, 0x51, 0x71, 0x3f, 0x5e, 0x00,
-  0x7f, 0x7f, 0x11, 0x31, 0x79, 0x6f, 0x4e, 0x00,
-  0x26, 0x6f, 0x49, 0x49, 0x4b, 0x7a, 0x30, 0x00,
-  0x00, 0x01, 0x01, 0x7f, 0x7f, 0x01, 0x01, 0x00,
-  0x3f, 0x7f, 0x40, 0x40, 0x40, 0x7f, 0x3f, 0x00,
-  0x0f, 0x1f, 0x38, 0x70, 0x38, 0x1f, 0x0f, 0x00,
-  0x1f, 0x7f, 0x38, 0x1c, 0x38, 0x7f, 0x1f, 0x00,
-  0x63, 0x77, 0x3e, 0x1c, 0x3e, 0x77, 0x63, 0x00,
-  0x00, 0x03, 0x0f, 0x78, 0x78, 0x0f, 0x03, 0x00,
-  0x61, 0x71, 0x79, 0x5d, 0x4f, 0x47, 0x43, 0x00
-};
+/* ---------- List Functions ---------- */
 
-void printbig(int c)
+struct list *list_init()
 {
-  int index = 0;
-  int col, data;
-  if (c >= '0' && c <= '9') index = 8 + (c - '0') * 8;
-  else if (c >= 'A' && c <= 'Z') index = 88 + (c - 'A') * 8;
-  do {
-    data = font[index++];
-    for (col = 0 ; col < 8 ; data <<= 1, col++) {
-      char d = data & 0x80 ? 'X' : ' ';
-      putchar(d); putchar(d);
-    }
-    putchar('\n');
-  } while (index & 0x7); 
-}
-
-void *list_index(struct list *list, int index)
-{
-    int cur = 0;
-
-    struct l_node *tmp = list->head;
-    while (tmp != NULL)
-    {
-        //printf("%d", tmp->element);
-        if(cur == index)
-        {
-            
-            return tmp->element;
-        }
-        else
-        {
-          
-            tmp = tmp->next;
-            cur++;
-        }
-    } 
-    return 0;
-}
-
-struct list * list_init() {
-    struct node d;
-    
     struct list *list = malloc(sizeof(struct list));
     list->size = 0;
     list->head = NULL;
     return list;
 }
 
-struct node * node_init(){
-    //printf("node_init");
-    struct node *node = malloc(sizeof(struct node));
-    node->val = malloc(sizeof(void *));
-    node->edges = malloc(sizeof(struct list *));
-    return node;
-}
-
-struct edge * edge_init(int w, struct node * n, int tr) {
-    struct edge *edge = malloc(sizeof(struct edge));
-    edge->weight = w;
-    edge->node = n;
-    edge->t = tr;
-    return edge;
-}
-
-void node_idset(struct node *node, int id) {
-  node->id = id;
-}
-
-void node_valset(struct node *node, void *val) {
-  node->val = val;
-}
-
-int list_push_back(struct list *list, void *element)
+void *list_index(struct list *list, int index)
 {
+    int cur = 0;
 
-    struct l_node *node = (struct l_node *)malloc(sizeof(struct l_node));
+    struct list_element *tmp = list->head;
+    while (tmp != NULL)
+    {
+        if (cur == index)
+        {
+            return tmp->element;
+        }
+        else
+        {
+            tmp = tmp->next;
+            cur++;
+        }
+    }
+    return 0;
+}
+
+void list_push_back(struct list *list, void *element)
+{
+    struct list_element *node = (struct list_element *)malloc(sizeof(struct list_element));
 
     node->next = NULL;
     node->element = element;
@@ -126,10 +43,10 @@ int list_push_back(struct list *list, void *element)
     {
         list->size = 1;
         list->head = node;
-        return 0;
+        return;
     }
 
-    struct l_node *tmp = list->head;
+    struct list_element *tmp = list->head;
 
     while (tmp->next != NULL)
     {
@@ -138,40 +55,128 @@ int list_push_back(struct list *list, void *element)
 
     tmp->next = node;
     list->size = list->size + 1;
-    return 1;
 }
 
-//  int main(){
-//     struct node james;
-//     james.id = 20;
-//     james.val = NULL;
-//     printf("%d, %d", james.id, james.id); }
+void list_push_front(struct list *list, void *element)
+{
 
-//     struct list * test = list_init();
-//     list_push_back(test, 20);
-//     list_push_back(test, 22);
-//     printf("%d\n", test->head->element);
-//     struct node james = node_init();
-//     printf("%d", james.id);
-//     printf("%d", * (int *)james.val);
-    // int a;
-    // //l[3];
-    // return 0;
-//}
+    struct list_element *node = (struct list_element *)malloc(sizeof(struct list_element));
 
-//     //  struct list *test = (struct list *)malloc(sizeof(struct list));
-//     //  struct l_node *node = (struct l_node *)malloc(sizeof(struct l_node));
-//     //  node->element = 10;
-//     //  node->next = NULL;
-//     //  test->head = node;
-//     //  test->size = 1;
-//     //  list_push_back(test, 5);
+    node->next = NULL;
+    node->element = element;
 
-//     //  struct l_node *node2 = (struct l_node *)malloc(sizeof(struct l_node));
-//     //  node2 = test->head->next;
+    if (list->head == NULL)
+    {
+        list->size = 1;
+        list->head = node;
+        return;
+    }
+}
 
-//     //  printf("%d\n", node2->element);
-//  }
+int list_size(struct list *list)
+{
+    return list->size;
+}
+
+/* ---------- End List Functions ---------- */
 
 
+/* ---------- Node Functions ---------- */
 
+struct node *node_init()
+{
+    struct node *node = malloc(sizeof(struct node));
+    node->val = malloc(sizeof(void *));
+    node->edges = malloc(sizeof(struct list *));
+    node->next = NULL;
+    return node;
+}
+
+void node_set_id(struct node *node, int id)
+{
+    node->id = id;
+}
+
+void node_set_val(struct node *node, void *val)
+{
+    node->val = val;
+}
+
+/* ---------- End Node Functions ---------- */
+
+
+/* ---------- Edge Functions ----------*/
+
+struct edge *edge_init(int w, struct node *n, int tr)
+{
+    struct edge *edge = malloc(sizeof(struct edge));
+    edge->weight = w;
+    edge->node = n;
+    edge->t = tr;
+    return edge;
+}
+
+/* ---------- End Edge Functions ---------- */
+
+
+/* ---------- Graph Functions ---------- */
+
+struct graph *graph_init()
+{
+    struct graph *graph = malloc(sizeof(struct graph));
+    graph->size = 0;
+    graph->head = NULL;
+    return graph;
+}
+
+int graph_size(struct graph *graph)
+{
+    return graph->size;
+}
+
+void graph_add_node(struct graph *graph, struct node *node)
+{
+    if (graph->head == NULL)
+    {
+        graph->size = 1;
+        graph->head = node;
+        return ;
+    }
+
+    struct node *tmp = node_init();
+    tmp->next = graph->head;
+
+    while (tmp->next != NULL)
+    {
+        tmp = tmp->next;
+    }
+
+    tmp->next = node;
+    graph->size = graph->size + 1;
+}
+
+/* ---------- End Graph Functions ---------- */
+
+
+/* ---------- Misc. Functions ---------- */
+
+void printbig(int c)
+{
+    int index = 0;
+    int col, data;
+    if (c >= '0' && c <= '9')
+        index = 8 + (c - '0') * 8;
+    else if (c >= 'A' && c <= 'Z')
+        index = 88 + (c - 'A') * 8;
+    do
+    {
+        data = font[index++];
+        for (col = 0; col < 8; data <<= 1, col++)
+        {
+            char d = data & 0x80 ? 'X' : ' ';
+            putchar(d);
+            putchar(d);
+        }
+        putchar('\n');
+    } while (index & 0x7);
+}

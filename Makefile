@@ -1,10 +1,10 @@
-all : clean graphene.native graphene.o graphene.bc test
+all : clean graphene.native graphene.o graphene.bc
 
-test : all testall.sh
+test : testall.sh
 	./testall.sh
 	rm -rf testall.log test-* fail-*
 
-test-clean: all testall.sh
+test-clean:
 	rm -rf testall.log test-* fail-*
 
 graphene: graphene.c
