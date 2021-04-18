@@ -78,6 +78,15 @@ int list_size(struct list *list)
     return list->size;
 }
 
+int list_empty(struct list *list)
+{
+    if(list->size == 0)
+    {
+        return 1;
+    }
+    return 0;
+}
+
 /* ---------- End List Functions ---------- */
 
 
@@ -100,6 +109,16 @@ void node_set_id(struct node *node, int id)
 void node_set_val(struct node *node, void *val)
 {
     node->val = val;
+}
+
+int node_get_id(struct node *node)
+{
+    return node->id;
+}
+
+void node_get_val(struct node *node)
+{
+    return *node->val;
 }
 
 /* ---------- End Node Functions ---------- */
@@ -144,7 +163,7 @@ void graph_add_node(struct graph *graph, struct node *node)
     }
 
     struct node *tmp = node_init();
-    tmp->next = graph->head;
+    tmp = graph->head;
 
     while (tmp->next != NULL)
     {
@@ -153,6 +172,27 @@ void graph_add_node(struct graph *graph, struct node *node)
 
     tmp->next = node;
     graph->size = graph->size + 1;
+}
+
+struct node *graph_get_node(struct graph *graph, int key)
+{
+    if (graph->head == NULL)
+    {
+        struct node *null = node_init();
+        return null;
+    }
+
+    struct node *tmp = node_init();
+    tmp = graph->head;
+
+    do
+    {
+        if(tmp->id == key){
+            return tmp;
+        }
+        tmp = tmp->next;
+    }
+    while (tmp->next != NULL);
 }
 
 /* ---------- End Graph Functions ---------- */

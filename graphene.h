@@ -38,6 +38,7 @@ void *list_index(struct list *list, int index);
 void list_push_back(struct list *list, void *element);
 void list_push_front(struct list *list, void *element);
 int list_size(struct list *list);
+int list_empty(struct list *list);
 
 struct node *node_init();
 void node_set_id(struct node *node, int id);
@@ -48,7 +49,7 @@ struct edge *edge_init(int w, struct node *n, int tr);
 struct graph *graph_init();
 int graph_size(struct graph *graph);
 void graph_add_node(struct graph *graph, struct node *node);
-
+struct node *graph_get_node(struct graph *graph, int key);
 
 static const char font[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

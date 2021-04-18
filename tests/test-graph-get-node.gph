@@ -1,0 +1,11 @@
+int main()
+{
+    graph<node<int> > g;
+    node<int> n;
+    n.id = 10;
+    print(n.id);
+    g.add_node(n);
+
+    node<int> tmp = g.get_node(10);
+    print(tmp.id);
+}

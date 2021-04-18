@@ -99,6 +99,11 @@ let translate (globals, functions) =
   let list_index_f : L.llvalue =
       L.declare_function "list_index" list_index_t the_module in
 
+  let list_empty_t : L.lltype =
+      L.function_type i32_t [| lst_t |] in  
+  let list_empty_f : L.llvalue =
+      L.declare_function "list_empty" list_empty_t the_module in
+
   let list_push_back_t : L.lltype = 
       L.function_type i32_t [| lst_t ; void_ptr_t |] in
   let list_push_back_f : L.llvalue =
@@ -110,19 +115,34 @@ let translate (globals, functions) =
       L.declare_function "list_push_front" list_push_front_t the_module in
 
   let node_set_id_t : L.lltype = 
-      L.function_type void_t [| node_t ; i32_t|] in
+      L.function_type void_ptr_t [| node_t ; i32_t|] in
   let node_set_id_f : L.llvalue =
       L.declare_function "node_set_id" node_set_id_t the_module in
 
   let node_set_val_t : L.lltype = 
-      L.function_type void_t [| node_t ; void_ptr_t|] in
+      L.function_type void_ptr_t [| node_t ; void_ptr_t|] in
   let node_set_val_f : L.llvalue =
       L.declare_function "node_set_val" node_set_val_t the_module in
 
+  let node_get_id_t : L.lltype = 
+      L.function_type i32_t [| node_t |] in
+  let node_get_id_f : L.llvalue =
+      L.declare_function "node_get_id" node_get_id_t the_module in
+
+  let node_get_val_t : L.lltype = 
+      L.function_type void_ptr_t [| node_t |] in
+  let node_get_val_f : L.llvalue =
+      L.declare_function "node_get_val" node_get_val_t the_module in
+
   let graph_add_node_t : L.lltype = 
-      L.function_type void_t [| graph_t ; node_t |] in
+      L.function_type i32_t [| graph_t ; node_t |] in
   let graph_add_node_f : L.llvalue =
       L.declare_function "graph_add_node" graph_add_node_t the_module in
+
+  let graph_get_node_t : L.lltype = 
+      L.function_type node_t [| graph_t ; i32_t |] in
+  let graph_get_node_f : L.llvalue =
+      L.declare_function "graph_get_node" graph_get_node_t the_module in
 
   (* Define each function (arguments and return type) so we can 
      call it even before we've created its body *)
@@ -259,13 +279,26 @@ let translate (globals, functions) =
           [|expr builder (List(t), l); expr builder e |] "list_index" builder)
           and ty = (L.pointer_type (ltype_of_typ t)) in 
               if L.is_null ptr then (
-                raise (Failure "HERE") )
+                raise (Failure ("error: trying to index uninitialized list") ) )
                 (* match t with
                 A.Int -> L.const_int i32_t 0
               | A.Float -> L.const_float float_t 0.0 
               | _ -> raise (Failure "NULL not implemented for this list index")) *)
           else (let cast = L.build_bitcast ptr ty "cast" builder in 
         L.build_load cast "val" builder)
+      | SCall ("list_empty", [ List(t), l ]) -> 
+        let ptr = (L.build_call list_empty_f 
+          [| expr builder (A.List(t), l) |] "list_empty" builder)
+          and ty = (L.pointer_type (ltype_of_typ t)) in 
+              if L.is_null ptr then (
+                raise (Failure ("error: trying to see if unitialized list is empty" ) ) )
+                (* match t with
+                A.Int -> L.const_int i32_t 0
+              | A.Float -> L.const_float float_t 0.0 
+              | _ -> raise (Failure "NULL not implemented for this list index")) *)
+          else let cast = L.build_bitcast ptr i32_t "cast" builder in
+            L.build_call list_empty_f 
+          [| expr builder (t, l) |] "list_empty" builder
       | SCall ("list_push_back", [(A.List(t),l); e]) -> (*let list_type = match t with
           A.List(A.Int) -> L.const_int i32_t 1
         | A.List(A.Float) -> L.const_int i32_t 2
@@ -288,19 +321,30 @@ let translate (globals, functions) =
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
            L.build_call list_push_front_f 
           [| expr builder (t, l); cast|] "list_push_front" builder
-      | SCall ("graph_add_node", [(A.Graph(t),l); e]) ->
+      | SCall ("graph_add_node", [(A.Graph(t),l); e]) -> (*let list_type = match t with
+          A.List(A.Int) -> L.const_int i32_t 1
+        | A.List(A.Float) -> L.const_int i32_t 2
+        | _ -> L.const_int (ltype_of_typ t) 0
+        in  *)
         let e' = expr builder e in
-        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        let ptr = L.build_malloc (ltype_of_typ t) "node" builder in
         ignore (L.build_store e' ptr builder); 
         let cast = L.build_bitcast ptr node_t "cast" builder in
            L.build_call graph_add_node_f 
-          [| expr builder (t, l)|] "graph_add_node" builder
+          [| expr builder (t, l); cast|] "graph_add_node" builder
+      | SCall ("graph_get_node", [(A.Graph(t),l); e]) ->
+        let e' = expr builder e in
+        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        ignore (L.build_store e' ptr builder); 
+        (* let cast = L.build_bitcast ptr node_t "cast" builder in *)
+           L.build_call graph_get_node_f 
+          [| expr builder (t, l)|] "graph_get_node" builder
       | SCall (f, args) ->
            let (fdef, fdecl) = StringMap.find f function_decls in
      let llargs = List.rev (List.map (expr builder) (List.rev args)) in
      let result = (match fdecl.styp with 
-                          A.Void -> ""
-                        | _ -> f ^ "_result") in
+            A.Void -> ""
+          | _ -> f ^ "_result") in
            L.build_call fdef (Array.of_list llargs) result builder
       | SAccess (s, x) -> 
           (match x with

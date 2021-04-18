@@ -1,0 +1,7 @@
+int main()
+{
+    list<int> l;
+    print(l.empty());
+    l.push_back(10);
+    print(l.empty());
+}
