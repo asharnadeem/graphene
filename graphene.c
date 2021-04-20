@@ -34,42 +34,69 @@ void *list_index(struct list *list, int index)
 
 void list_push_back(struct list *list, void *element)
 {
-    struct list_element *node = (struct list_element *)malloc(sizeof(struct list_element));
-
+    struct list_element* node = (struct list_element*) malloc(sizeof(struct list_element));
+   
+    node->element  = element;
     node->next = NULL;
-    node->element = element;
-
+  
     if (list->head == NULL)
     {
-        list->size = 1;
-        list->head = node;
-        return;
-    }
-
-    struct list_element *tmp = list->head;
-
-    while (tmp->next != NULL)
-    {
+       list->head = node;
+       return;
+    }  
+       
+    struct list_element* tmp = list->head;
+    while (tmp->next != NULL){
         tmp = tmp->next;
     }
-
+   
     tmp->next = node;
     list->size = list->size + 1;
 }
 
 void list_push_front(struct list *list, void *element)
 {
+    struct list_element* node = (struct list_element*) malloc(sizeof(struct list_element));
+    node->element  = element;
+    node->next = (list->head);
+    list->head = node;
+    list->size = list->size + 1;
+}
 
-    struct list_element *node = (struct list_element *)malloc(sizeof(struct list_element));
-
-    node->next = NULL;
-    node->element = element;
-
-    if (list->head == NULL)
+void *list_pop_back(struct list *list)
+{
+    struct list_element *tmp = list->head;
+    struct list_element *t;
+    if(list->head->next==NULL)
     {
-        list->size = 1;
-        list->head = node;
-        return;
+        void *data = list->head->element;
+        free(list->head);
+        list->head = NULL;
+        return data;
+    }
+    else
+    {
+        while(tmp->next != NULL)
+        {
+            t = tmp;
+            tmp = tmp->next;
+        }
+        void *data = t->next->element;
+        free(t->next);
+        t->next=NULL; 
+        return data;
+    }    
+}
+
+void *list_pop_front(struct list *list)
+{
+    if(list->head != NULL) {
+        void *data = list->head->element;
+        struct list_element *tmp = list->head->next;
+        free(list->head);
+        list->head = tmp;
+        list->size = list->size - 1;
+        return data;
     }
 }
 
@@ -220,3 +247,21 @@ void printbig(int c)
         putchar('\n');
     } while (index & 0x7);
 }
+
+// int main()
+// {
+//     int a = 1;
+//     int b = 2;
+
+//     struct list *l = malloc(sizeof(struct list));
+//     list_push_back(l, &a);
+//     list_push_back(l, &b);
+
+//     int c =  *( (int *) list_pop_back(l));
+//     int d =  *( (int *) list_pop_back(l));
+//     // int e =  *( (int *) list_pop_front(l));
+
+//     printf("%d\n", c);
+//     printf("%d\n", d);
+//     // /printf("%d\n", e);
+// }

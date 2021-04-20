@@ -114,6 +114,16 @@ let translate (globals, functions) =
   let list_push_front_f : L.llvalue =
       L.declare_function "list_push_front" list_push_front_t the_module in
 
+  let list_pop_back_t : L.lltype = 
+      L.function_type void_ptr_t [| lst_t |] in
+  let list_pop_back_f : L.llvalue =
+      L.declare_function "list_pop_back" list_pop_back_t the_module in
+
+  let list_pop_front_t : L.lltype = 
+      L.function_type void_ptr_t [| lst_t |] in
+  let list_pop_front_f : L.llvalue =
+      L.declare_function "list_pop_front" list_pop_front_t the_module in
+
   let node_set_id_t : L.lltype = 
       L.function_type void_ptr_t [| node_t ; i32_t|] in
   let node_set_id_f : L.llvalue =
@@ -321,6 +331,30 @@ let translate (globals, functions) =
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
            L.build_call list_push_front_f 
           [| expr builder (t, l); cast|] "list_push_front" builder
+      | SCall ("list_pop_back", [ (List(t), l) ]) -> 
+        let ptr = (L.build_call list_pop_back_f 
+          [| expr builder (List(t), l) |] "list_pop_back" builder)
+          and ty = (L.pointer_type (ltype_of_typ t)) in 
+              if L.is_null ptr then (
+                raise (Failure ("error: trying to pop from uninitialized list") ) )
+                (* match t with
+                A.Int -> L.const_int i32_t 0
+              | A.Float -> L.const_float float_t 0.0 
+              | _ -> raise (Failure "NULL not implemented for this list index")) *)
+          else (let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder)
+      | SCall ("list_pop_front", [ (List(t), l) ]) -> 
+        let ptr = (L.build_call list_pop_front_f 
+          [| expr builder (List(t), l) |] "list_pop_front" builder)
+          and ty = (L.pointer_type (ltype_of_typ t)) in 
+              if L.is_null ptr then (
+                raise (Failure ("error: trying to pop from uninitialized list") ) )
+                (* match t with
+                A.Int -> L.const_int i32_t 0
+              | A.Float -> L.const_float float_t 0.0 
+              | _ -> raise (Failure "NULL not implemented for this list index")) *)
+          else (let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder)
       | SCall ("graph_add_node", [(A.Graph(t),l); e]) -> (*let list_type = match t with
           A.List(A.Int) -> L.const_int i32_t 1
         | A.List(A.Float) -> L.const_int i32_t 2

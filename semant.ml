@@ -69,6 +69,8 @@ let check (globals, functions) =
       body = [] } map
       in List.fold_left add_bind_two built_in_decls_one [ 
         (Int, "list_empty", List(Int););
+        (Int, "list_pop_back", List(Int));
+        (Int, "list_pop_front", List(Int));
         (Int, "node_get_id", Node(Int););
         (Int, "node_get_val", Node(Int););
      ]
@@ -238,6 +240,38 @@ let check (globals, functions) =
       | Call("push_front", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
             List(Int) -> "list_push_front"
           | _ -> raise (Failure ("error: push_front not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          let fd = find_func sub_func in
+          let param_length = List.length fd.formals in
+          if List.length el != param_length then
+            raise (Failure ("error: expecting " ^ string_of_int param_length ^
+                           " arguments in " ^ string_of_expr call))
+          else let check_call (ft, _) e =
+            let (et, e') = expr e in
+            let err = "error: illegal argument found " ^ string_of_typ et ^
+              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
+            in (check_assign ft et err, e')
+          in  
+          let args = List.map2 check_call fd.formals el
+          in (fd.typ, SCall(sub_func, args))
+      | Call("pop_back", ([Id(l)] as el)) as call -> let sub_func = (match type_of_identifier l with
+            List(Int) -> "list_pop_back"
+          | _ -> raise (Failure ("error: pop_back not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          let fd = find_func sub_func in
+          let param_length = List.length fd.formals in
+          if List.length el != param_length then
+            raise (Failure ("error: expecting " ^ string_of_int param_length ^
+                           " arguments in " ^ string_of_expr call))
+          else let check_call (ft, _) e =
+            let (et, e') = expr e in
+            let err = "error: illegal argument found " ^ string_of_typ et ^
+              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e
+            in (check_assign ft et err, e')
+          in  
+          let args = List.map2 check_call fd.formals el
+          in (fd.typ, SCall(sub_func, args))
+      | Call("pop_front", ([Id(l)] as el)) as call -> let sub_func = (match type_of_identifier l with
+            List(Int) -> "list_pop_front"
+          | _ -> raise (Failure ("error: pop_front not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
