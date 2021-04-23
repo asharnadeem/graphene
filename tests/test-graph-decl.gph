@@ -1,7 +1,7 @@
 int main()
 {
     list<int> l;
-    graph< node<int> > g;
+    graph<int> g;
     node<int> n;
     g.add_node(n);
     return 0;

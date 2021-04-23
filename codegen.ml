@@ -6,12 +6,7 @@ module StringMap = Map.Make(String)
 
 let get_type(t, _) = t
 
-(* TODO: returning a variable doesn't work?
-         need to figure out how to check null ptr for indexing out of bounds 
-         other types of edges (basically copy what I did for dedge) 
-         graphs
-         some way to print edges?
-         cleaup
+(* TODO: returning non-zero from main doesn't work?
          DONE???? *)
 
 (* translate : Sast.program -> Llvm.module *)
@@ -304,7 +299,7 @@ let translate (globals, functions) =
       | SCall ("printf", [e]) -> 
 	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
-      | SListIndex ((A.List(t), _) as ls, e) -> 
+      | SIndex ((A.List(t), _) as ls, e) -> 
         let ptr = (L.build_call list_index_f 
           [|expr builder ls; expr builder e |] "list_index" builder)
           and ty = (L.pointer_type (ltype_of_typ t)) in 
@@ -316,7 +311,9 @@ let translate (globals, functions) =
               | _ -> raise (Failure "NULL not implemented for this list index")) *)
           else (let cast = L.build_bitcast ptr ty "cast" builder in 
         L.build_load cast "val" builder)
-      | SListIndex(_) -> raise (Failure 
+      | SIndex ((A.Graph(_), _), _) -> 
+          raise (Failure "error: graph not yet implemented")
+      | SIndex(_) -> raise (Failure 
           ("this should never happen, error in semant"))
       | SCall ("list_empty", [ A.List(t), l ]) -> 
             L.build_call list_empty_f 
@@ -367,14 +364,14 @@ let translate (globals, functions) =
         | _ -> L.const_int (ltype_of_typ t) 0
         in  *)
         let e' = expr builder e in
-        let ptr = L.build_malloc (ltype_of_typ t) "node" builder in
+        let ptr = L.build_malloc (ltype_of_typ (A.Node(t))) "node" builder in
         ignore (L.build_store e' ptr builder); 
         let cast = L.build_bitcast ptr node_t "cast" builder in
            L.build_call graph_add_node_f 
           [| expr builder (t, l); cast|] "graph_add_node" builder
       | SCall ("graph_get_node", [(A.Graph(t),l); e]) ->
         let e' = expr builder e in
-        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        let ptr = L.build_malloc (ltype_of_typ (A.Node(t))) "element" builder in
         ignore (L.build_store e' ptr builder); 
         (* let cast = L.build_bitcast ptr node_t "cast" builder in *)
            L.build_call graph_get_node_f 

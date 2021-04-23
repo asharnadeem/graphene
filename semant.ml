@@ -88,8 +88,8 @@ let check (globals, functions) =
         (Int, "list_push_front", List(Int), Int);
         (Int, "node_set_id", Node(Int), Int);
         (Int, "node_set_val", Node(Int), Int);
-        (Int, "graph_add_node", Graph(Node(Int)), Node(Int));
-        (Node(Int), "graph_get_node", Graph(Node(Int)), Int);
+        (Int, "graph_add_node", Graph(Int), Node(Int));
+        (Node(Int), "graph_get_node", Graph(Int), Int);
      ]
     
   
@@ -137,6 +137,27 @@ let check (globals, functions) =
                     (* Declare(t, x, e) -> ignore e; (t, x) :: locals *)
                 | _ -> locals) t
     in
+    let fulldecls = globals @ func.formals @ concat_statements [] func.body 
+    in  (List.iter (fun (t, _) -> match t with 
+                  Node(it) -> (match it with
+                      List(_) | Node(_) | Graph(_) | Edge(_) | Void ->
+                        raise (Failure ("error: nodes cannot wrap "
+                              ^ string_of_typ it))
+                    | _ -> ())
+                | Edge(it) -> (match it with
+                      List(_) | Node(_) | Graph(_) | Edge(_) | Void ->
+                        raise (Failure ("error: edges cannot wrap "
+                              ^ string_of_typ it))
+                    | _ -> ())
+                | Graph(it) -> (match it with
+                      List(_) | Node(_) | Edge(_) | Graph(_) | Void ->
+                        raise (Failure ("error: graphs cannot wrap "
+                              ^ string_of_typ it))
+                    | _ -> ())
+                | List(Void) -> raise (Failure 
+                  "error: lists cannot wrap void")
+                | _ -> ())
+                   fulldecls);
     (* Local symbol table for function *)
     let symbols = List.fold_left (fun m (t, x) -> StringMap.add x t m) 
       StringMap.empty (globals @ func.formals @ concat_statements [] func.body)
@@ -379,7 +400,7 @@ let check (globals, functions) =
           in (fd.typ, SCall(sub_func, args))
       | Call("add_node", ([Id(l) ; e] as el)) as call -> let sub_func = 
           (match type_of_identifier l with
-            Graph(Node(Int)) -> "graph_add_node"
+            Graph(Int) -> "graph_add_node"
           | _ -> raise (Failure ("error: add_node not a function of type: " 
             ^ string_of_typ (type_of_identifier l)
              ^ ", passed " ^ string_of_expr e))) in
@@ -398,7 +419,7 @@ let check (globals, functions) =
           in (fd.typ, SCall(sub_func, args))
       | Call("get_node", ([Id(l) ; e] as el)) as call -> let sub_func = 
           (match type_of_identifier l with
-            Graph(Node(Int)) -> "graph_get_node"
+            Graph(Int) -> "graph_get_node"
           | _ -> raise (Failure ("error: get_node not a function of type: " 
                   ^ string_of_typ (type_of_identifier l)
                   ^ ", passed " ^ string_of_expr e))) in
@@ -461,9 +482,10 @@ let check (globals, functions) =
             ((Node(a), _),  (Node(b), _)) when a = b -> 
               (Node(a), SDEdgeC(sn1, expr e, sn2))
           | _ -> raise (Failure ("error: DEdgeC fail")))
-      | ListIndex(l, i) -> let l' = expr l and 
+      | Index(l, i) -> let l' = expr l and 
                                i' = expr i in (match (l', i') with
-            ((List(t),_), (Int, _)) -> (t, SListIndex(l', i'))
+            ((List(t),_), (Int, _)) -> (t, SIndex(l', i'))
+          | ((Graph(t),_), (Int, _)) -> (t, SIndex(l', i'))
           | (_, (Int,_)) -> raise (Failure ("error: cannot index non-list " ^ 
                                     string_of_expr l))
           | ((List(_),_), _) -> raise (Failure 

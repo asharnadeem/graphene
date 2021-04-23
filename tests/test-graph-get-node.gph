@@ -1,6 +1,6 @@
 int main()
 {
-    graph<node<int> > g;
+    graph<int> g;
     node<int> n;
     n.id = 10;
     print(n.id);

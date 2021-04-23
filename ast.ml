@@ -39,7 +39,7 @@ type expr =
   | AssignField of expr * string * expr
   | Call of string * expr list
   | Access of expr * string
-  | ListIndex of expr * expr
+  | Index of expr * expr
   | PushBack of expr * expr
   | Noexpr
   | UEdge of expr * expr
@@ -132,7 +132,7 @@ let rec string_of_expr = function
   | DEdge(n1, n2) -> "(" ^ string_of_expr n1 ^ " -> " ^ string_of_expr n2 ^ ")"
   | DEdgeC(n1, e, n2) -> "(" ^ string_of_expr n1 ^ " -> [" ^ string_of_expr e 
                           ^ "] " ^ string_of_expr n2 ^ ")"
-  | ListIndex(l, i) -> string_of_expr l ^ "[" ^ string_of_expr i ^ "]"
+  | Index(l, i) -> string_of_expr l ^ "[" ^ string_of_expr i ^ "]"
   | PushBack(l, e) -> string_of_expr l ^ ".push_back(" 
         ^ string_of_expr e ^ ")"
 
