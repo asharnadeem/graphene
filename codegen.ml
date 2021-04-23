@@ -321,13 +321,13 @@ let translate (globals, functions) =
       | SCall ("list_empty", [ A.List(t), l ]) -> 
             L.build_call list_empty_f 
           [| expr builder (t, l) |] "list_empty" builder
-      | SCall ("list_push_back", [(A.List(t),l); e]) -> 
+      (* | SCall ("list_push_back", [(A.List(t),l); e]) -> 
         let e' = expr builder e in
         let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
         ignore (L.build_store e' ptr builder); 
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
           L.build_call list_push_back_f 
-          [| expr builder (t, l); cast|] "list_push_back" builder
+          [| expr builder (t, l); cast|] "list_push_back" builder *)
       | SCall ("list_push_front", [(A.List(t),l); e]) -> 
         let e' = expr builder e in
         let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
@@ -488,6 +488,14 @@ let translate (globals, functions) =
         ignore (L.build_call list_push_back_f
             [| n2ell; cast2|] "edge_push" builder);
         expr builder n1
+      | SPushBack((A.List(t), l), e) -> let e' = expr builder e in
+        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        ignore (L.build_store e' ptr builder); 
+        let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
+          ignore (L.build_call list_push_back_f 
+          [| expr builder (A.List(t), l); cast|] "list_push_back" builder);
+          expr builder (A.List(t),l)
+      | SPushBack(_) -> raise (Failure ("internal error on pushback"))
             
       in
       

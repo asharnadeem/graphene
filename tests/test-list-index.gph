@@ -1,5 +1,7 @@
 int main() {
     list<int> l;
+    list<float> f;
+    
     l.push_back(3);
     l.push_back(5);
     print(l[0]);

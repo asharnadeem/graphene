@@ -18,6 +18,7 @@ and sx =
   | SDEdge of sexpr * sexpr
   | SDEdgeC of sexpr * sexpr * sexpr
   | SListIndex of sexpr * sexpr
+  | SPushBack of sexpr * sexpr
 
 type sstmt = 
     SExpr of sexpr
@@ -64,7 +65,11 @@ let rec string_of_sexpr (t, e) =
   | SDEdgeC(n1, e, n2) -> string_of_sexpr n1 ^ " ->[" ^ string_of_sexpr e 
                           ^ "] " ^ string_of_sexpr n2
   | SListIndex(l, i) -> string_of_sexpr l ^ "[" ^ string_of_sexpr i ^ "]"
+  | SPushBack(l, e) -> string_of_sexpr l ^ ".push_back(" 
+                      ^ string_of_sexpr e ^ ")"
+  
   ) ^ ")"
+  
       
 let rec string_of_sstmt = function
     SExpr(se) -> string_of_sexpr se ^ ";\n"

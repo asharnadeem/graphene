@@ -84,7 +84,7 @@ let check (globals, functions) =
       body = [] } map
       in List.fold_left add_bind built_in_decls_two [ 
         (Int, "list_index", List(Int), Int;);
-        (Int, "list_push_back", List(Int), Int);
+        (* (Int, "list_push_back", List(Int), Int); *)
         (Int, "list_push_front", List(Int), Int);
         (Int, "node_set_id", Node(Int), Int);
         (Int, "node_set_val", Node(Int), Int);
@@ -229,7 +229,7 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("push_back", ([Id(l) ; e] as el)) as call -> let sub_func = 
+      (* | Call("push_back", ([Id(l) ; e] as el)) as call -> let sub_func = 
           (match type_of_identifier l with
             List(Int) -> "list_push_back"
           | _ -> raise (Failure ("error: push_back not a function of type: " 
@@ -247,7 +247,7 @@ let check (globals, functions) =
             in (check_assign ft et err, e')
           in  
           let args = List.map2 check_call fd.formals el
-          in (fd.typ, SCall(sub_func, args))
+          in (fd.typ, SCall(sub_func, args)) *)
       | Call("push_front", ([Id(l) ; e] as el)) as call -> let sub_func = 
           (match type_of_identifier l with
             List(Int) -> "list_push_front"
@@ -469,7 +469,16 @@ let check (globals, functions) =
           | ((List(_),_), _) -> raise (Failure 
           ("error: cannot index list with non-int " ^ string_of_expr i))
           | _ -> raise (Failure ("error: invalid index of " 
-          ^ string_of_expr l ^ " with " ^ string_of_expr i)))                               
+          ^ string_of_expr l ^ " with " ^ string_of_expr i)))    
+      | PushBack(l, e) -> let l' = expr l 
+                          and e' = expr e in (match (l', e') with
+            ((List(tl),_), (te, _)) when tl = te -> (List(tl), SPushBack(l', e'))
+          | ((List(tl),_), _) -> raise (Failure ("error: cannot push " 
+          ^ string_of_expr e ^ " to list of type " ^ string_of_typ tl))
+          | _ -> raise (Failure ("error: push_back on non-list " 
+          ^ string_of_expr e))
+                          )
+
     in
 
     let check_bool_expr e =

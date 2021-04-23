@@ -40,6 +40,7 @@ type expr =
   | Call of string * expr list
   | Access of expr * string
   | ListIndex of expr * expr
+  | PushBack of expr * expr
   | Noexpr
   | UEdge of expr * expr
   | UEdgeC of expr * expr * expr
@@ -132,6 +133,8 @@ let rec string_of_expr = function
   | DEdgeC(n1, e, n2) -> "(" ^ string_of_expr n1 ^ " -> [" ^ string_of_expr e 
                           ^ "] " ^ string_of_expr n2 ^ ")"
   | ListIndex(l, i) -> string_of_expr l ^ "[" ^ string_of_expr i ^ "]"
+  | PushBack(l, e) -> string_of_expr l ^ ".push_back(" 
+        ^ string_of_expr e ^ ")"
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"

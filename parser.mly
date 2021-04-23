@@ -6,7 +6,8 @@
 %token PLUS MINUS TIMES DIVIDE MOD ASSIGN NOT EQ NEQ LT LEQ GT GEQ AND OR
 %token TILDE DIREDGE UNDIREDGE DGT DEDGE UEDGE DEDGEP UEDGEP
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
-%token INT FLOAT STRING GRAPH NODE EDGE LIST VOID
+%token INT FLOAT STRING GRAPH NODE EDGE LIST VOID 
+%token PUSHBACK
 %token <int> LITERAL
 %token <string> FLIT
 %token <string> SLIT
@@ -120,9 +121,13 @@ expr:
   | expr DOT ID ASSIGN expr { AssignField($1, $3, $5) }
   | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
+  /* nodeA -> nodeB */
   | expr DEDGE expr { DEdge( $1, $3) }
+  /* nodeA ->[1] nodeB */
   | expr DEDGE LSQUARE expr RSQUARE expr { DEdgeC( $1, $4, $6) }
+  /* nodeA <-> nodeB */
   | expr UEDGE expr { UEdge ( $1, $3) }
+  /* nodeA <-> nodeB */
   | expr UEDGE LSQUARE expr RSQUARE expr { UEdgeC( $1, $4, $6) }
   /* nodeA ~~ nodeB 
   | expr UNDIREDGE expr { UEdge($1, $3) } */
@@ -139,6 +144,7 @@ expr:
   /* [1,2,3,4,5] 
   Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
   | expr DOT ID LPAREN args_opt RPAREN { Call( $3, $1 :: $5 ) }
+  | expr DOT PUSHBACK LPAREN expr RPAREN { PushBack($1, $5) }
 
 literal:
     ID { Id($1) }

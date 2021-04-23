@@ -64,6 +64,7 @@ rule token = parse
   | "return"              { RETURN }
   | "continue"            { CONTINUE }
   | "break"               { BREAK }
+  | "push_back"           { PUSHBACK }
 
 (* literals *)
   | '\"' ([^'\"']* as str) '\"' { SLIT(str) }

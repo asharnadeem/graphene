@@ -1,0 +1,7 @@
+int main() {
+    list<float> i, j;
+    i.push_back(1.1);
+    j.push_back(2.2);
+    printf(i[0]);
+    printf(j[0]);
+}
