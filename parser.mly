@@ -18,7 +18,7 @@
 
 %nonassoc NOELSE
 %nonassoc ELSE
-%right ASSIGN 
+%right ASSIGN LSQUARE
 %right DIREDGE UNDIREDGE TILDE DGT
 %right DOT
 %left OR
@@ -127,7 +127,7 @@ expr:
   /* node.id */ 
   | expr DOT ID { Access($1, $3) } 
   /* queue[3] */
-  | ID LSQUARE args_opt RSQUARE { Call("list_index", Id($1) :: $3) }
+  | expr LSQUARE expr RSQUARE { ListIndex($1, $3) }
   /* [1,2,3,4,5] 
   Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
   | expr DOT ID LPAREN args_opt RPAREN { Call( $3, $1 :: $5 ) }

@@ -26,6 +26,7 @@ type typ =
   | Edge of typ
   | Node of typ
   | List of typ
+  
 
 type expr =
     Ilit of int
@@ -38,7 +39,7 @@ type expr =
   | AssignField of expr * string * expr
   | Call of string * expr list
   | Access of expr * string
-  (* | Index of expr * expr *)
+  | ListIndex of expr * expr
   | Noexpr
   | UEdge of expr * expr
   | UEdgeC of expr * expr * expr
@@ -116,7 +117,8 @@ let rec string_of_expr = function
   | Binop(e1, o, e2) -> string_of_expr e1 ^ " " ^ 
     string_of_binop o ^ " " ^ string_of_expr e2
   | Assign(x, e) -> x ^ " = " ^ string_of_expr e
-  | AssignField(x, s, e) -> string_of_expr x ^ "." ^ s ^ " = " ^ string_of_expr e
+  | AssignField(x, s, e) -> string_of_expr x 
+      ^ "." ^ s ^ " = " ^ string_of_expr e
   | Call(f, el) -> 
     f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Access(x, s) -> string_of_expr x ^ "." ^ s
@@ -128,6 +130,7 @@ let rec string_of_expr = function
   | DEdge(n1, n2) -> string_of_expr n1 ^ " ~> " ^ string_of_expr n2
   | DEdgeC(n1, e, n2) -> string_of_expr n1 ^ " ~(" ^ string_of_expr e 
                           ^ ")>> " ^ string_of_expr n2
+  | ListIndex(l, i) -> string_of_expr l ^ "[" ^ string_of_expr i ^ "]"
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"
@@ -146,7 +149,8 @@ let rec string_of_stmt = function
   | Continue -> "continue;"
   | Break -> "break;"
   | Declare(t, x, Noexpr) -> string_of_typ t ^ " " ^ x ^ ";\n"
-  | Declare(t, x, e) -> string_of_typ t ^ " " ^ x ^ "; " ^ string_of_expr e ^ ";\n"
+  | Declare(t, x, e) -> string_of_typ t ^ " " ^ x ^ "; " 
+        ^ string_of_expr e ^ ";\n"
 
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"

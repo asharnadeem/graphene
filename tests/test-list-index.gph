@@ -4,6 +4,7 @@ int main() {
     l.push_back(5);
     print(l[0]);
     print(l[1]);
+    //list<float> l1;
     //print(l.size - 2);
     return 0;
 }

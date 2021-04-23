@@ -31,12 +31,13 @@ let check (globals, functions) =
   
     let rec dups = function
         [] -> ()
-      | ((_,n1) :: (_,n2) :: _) when n1 = n2 -> raise(Failure ("error: variable previously declared: " ^ n1))
+      | ((_,n1) :: (_,n2) :: _) when n1 = n2 -> raise(Failure 
+          ("error: variable previously declared: " ^ n1))
       | _ :: t -> dups t
     in dups (List.sort (fun (_,a) (_,b) -> compare a b) binds)
   in check_binds "global" globals;
 
-  let check_list_binds (binds : sexpr list) =
+  (* let check_list_binds (binds : sexpr list) =
       List.iter valid_element_type binds;
 
       let rec check_type = function
@@ -47,7 +48,7 @@ let check (globals, functions) =
       in check_type (List.sort (fun (a,_) (b,_) -> compare a b) binds);
       
       (*first_element(binds)*)
-  in 
+  in  *)
 
   (* Check functions *)
   let built_in_decls_one = 
@@ -145,7 +146,7 @@ let check (globals, functions) =
 
     (* Checks expressions *)
     let rec expr = 
-      let check_list m =
+      (* let check_list m =
           let (t, _) = expr m in
           match t with
           List(_) -> ()
@@ -154,7 +155,7 @@ let check (globals, functions) =
 				let (t, _) = expr m in
 				match t with
 				 List(ty) -> ty
-				|_ -> raise (Failure ("error: " ^ string_of_typ t)) in
+				|_ -> raise (Failure ("error: " ^ string_of_typ t)) in *)
       function
         Ilit l -> (Int, SIlit l)
       | Slit l -> (String, SSlit l)
@@ -206,9 +207,11 @@ let check (globals, functions) =
                 (check_assign it rt err, SAssignField(sx, s, (rt, e')))
             | _ -> raise (Failure (err)))
       (* split generalized function into specific function *)
-      | Call("empty", ([Id(l)] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("empty", ([Id(l)] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             List(Int) -> "list_empty"
-          | _ -> raise (Failure ("error: empty not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: empty not a function of type: " 
+                        ^ string_of_typ (type_of_identifier l)))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -222,9 +225,12 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("push_back", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("push_back", ([Id(l) ; e] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             List(Int) -> "list_push_back"
-          | _ -> raise (Failure ("error: push_back not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: push_back not a function of type: " 
+                        ^ string_of_typ (type_of_identifier l)
+              ^ ", passed " ^ string_of_expr e))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -238,9 +244,12 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("push_front", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("push_front", ([Id(l) ; e] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             List(Int) -> "list_push_front"
-          | _ -> raise (Failure ("error: push_front not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: push_front not a function of type: " ^ 
+              string_of_typ (type_of_identifier l)  ^ 
+              ", passed " ^ string_of_expr e))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -254,9 +263,11 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("pop_back", ([Id(l)] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("pop_back", ([Id(l)] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             List(Int) -> "list_pop_back"
-          | _ -> raise (Failure ("error: pop_back not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: pop_back not a function of type: " 
+                          ^ string_of_typ (type_of_identifier l)))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -270,9 +281,11 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("pop_front", ([Id(l)] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("pop_front", ([Id(l)] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             List(Int) -> "list_pop_front"
-          | _ -> raise (Failure ("error: pop_front not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: pop_front not a function of type: " 
+                        ^ string_of_typ (type_of_identifier l)))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -286,9 +299,12 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("set_id", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("set_id", ([Id(l) ; e] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             Node(Int)    -> "node_set_id"
-          | _ -> raise (Failure ("error: set_id not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: set_id not a function of type: " 
+              ^ string_of_typ (type_of_identifier l)
+               ^ ", passed " ^ string_of_expr e))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -302,9 +318,12 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("set_val", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("set_val", ([Id(l) ; e] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             Node(Int)    -> "node_set_val"
-          | _ -> raise (Failure ("error: set_val not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: set_val not a function of type: " ^ 
+                string_of_typ (type_of_identifier l)
+                 ^ ", passed " ^ string_of_expr e))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -318,9 +337,11 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("get_id", ([Id(l)] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("get_id", ([Id(l)] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             Node(Int) -> "node_get_id"
-          | _ -> raise (Failure ("error: get_id not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: get_id not a function of type: " 
+                      ^ string_of_typ (type_of_identifier l)))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -334,9 +355,11 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("get_val", ([Id(l)] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("get_val", ([Id(l)] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             Node(Int) -> "node_get_val"
-          | _ -> raise (Failure ("error: get_val not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: get_val not a function of type: " 
+          ^ string_of_typ (type_of_identifier l)))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -350,9 +373,12 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("add_node", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("add_node", ([Id(l) ; e] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             Graph(Node(Int)) -> "graph_add_node"
-          | _ -> raise (Failure ("error: add_node not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: add_node not a function of type: " 
+            ^ string_of_typ (type_of_identifier l)
+             ^ ", passed " ^ string_of_expr e))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -366,9 +392,12 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(sub_func, args))
-      | Call("get_node", ([Id(l) ; e] as el)) as call -> let sub_func = (match type_of_identifier l with
+      | Call("get_node", ([Id(l) ; e] as el)) as call -> let sub_func = 
+          (match type_of_identifier l with
             Graph(Node(Int)) -> "graph_get_node"
-          | _ -> raise (Failure ("error: get_node not a function of type: " ^ string_of_typ (type_of_identifier l)))) in
+          | _ -> raise (Failure ("error: get_node not a function of type: " 
+                  ^ string_of_typ (type_of_identifier l)
+                  ^ ", passed " ^ string_of_expr e))) in
           let fd = find_func sub_func in
           let param_length = List.length fd.formals in
           if List.length el != param_length then
@@ -402,21 +431,25 @@ let check (globals, functions) =
               | "id"  -> (Int, SAccess(sx, s))
               | "edges" -> (List(Edge(Int)), SAccess(sx, s))
               | _ -> raise (Failure ("error: invalid field")))
-          | _ -> raise (Failure ("error: this type does not have this field: " ^ s)))
+          | _ -> raise 
+              (Failure ("error: this type does not have this field: " ^ s)))
       | Noexpr -> (Void, SNoexpr)
       | UEdge(n1, n2) -> let sn1 = expr n1 and
                              sn2 = expr n2 in (match (sn1, sn2) with 
-            ((Node(a), _),  (Node(b), _)) when a = b -> (Edge(Node(a)), SUEdge(sn1, sn2))
+            ((Node(a), _),  (Node(b), _)) when a = b -> 
+                    (Edge(Node(a)), SUEdge(sn1, sn2))
           | _ -> raise (Failure ("error: UEdge fail")))
 
      | UEdgeC(n1, e, n2) -> let sn1 = expr n1 and
                                 sn2 = expr n2 in (match (sn1, sn2) with
-            ((Node(a), _),  (Node(b), _)) when a = b -> (Edge(Node(a)), SUEdgeC(sn1, expr e, sn2))
+            ((Node(a), _),  (Node(b), _)) when a = b -> 
+                    (Edge(Node(a)), SUEdgeC(sn1, expr e, sn2))
           | _ -> raise (Failure ("error: UEdgeC fail")))
 
       | DEdge(n1, n2) -> let sn1 = expr n1 and
                              sn2 = expr n2 in (match (sn1, sn2) with
-            ((Node(a), _),  (Node(b), _)) when a = b -> (Edge(Node(a)), SDEdge(sn1, sn2))
+            ((Node(a), _),  (Node(b), _)) when a = b -> 
+                    (Edge(Node(a)), SDEdge(sn1, sn2))
           | _ -> raise (Failure ("error: DEdge fail")))
 
       | DEdgeC(n1, e, n2) -> let sn1 = expr n1 and
@@ -424,6 +457,15 @@ let check (globals, functions) =
             ((Node(a), _),  (Node(b), _)) when a = b -> 
               (Edge(Node(a)), SDEdgeC(sn1, expr e, sn2))
           | _ -> raise (Failure ("error: DEdgeC fail")))
+      | ListIndex(l, i) -> let l' = expr l and 
+                               i' = expr i in (match (l', i') with
+            ((List(t),_), (Int, _)) -> (t, SListIndex(l', i'))
+          | (_, (Int,_)) -> raise (Failure ("error: cannot index non-list " ^ 
+                                    string_of_expr l))
+          | ((List(_),_), _) -> raise (Failure 
+          ("error: cannot index list with non-int " ^ string_of_expr i))
+          | _ -> raise (Failure ("error: invalid index of " 
+          ^ string_of_expr l ^ " with " ^ string_of_expr i)))                               
     in
 
     let check_bool_expr e =
@@ -445,7 +487,8 @@ let check (globals, functions) =
           in SBlock(check_stmt_list sl)
       | Return e -> let (t, e') = expr e in
           if t = func.typ then SReturn (t, e')
-          else raise (Failure ("error: expected return to be of type: " ^ string_of_typ t))
+          else raise (Failure 
+              ("error: expected return to be of type: " ^ string_of_typ t))
       | If(p, b1, b2) -> SIf(check_bool_expr p, check_stmt b1, check_stmt b2)
       | For(e1, e2, e3, s) -> 
           SFor(expr e1, expr e2, expr e3, check_stmt s)

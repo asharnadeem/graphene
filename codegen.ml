@@ -32,16 +32,20 @@ let translate (globals, functions) =
   and float_t    = L.double_type context
   and void_t     = L.void_type   context 
   and void_ptr_t = L.pointer_type (L.i8_type context)
-  and lst_t      = L.pointer_type (match L.type_by_name llm_graph "struct.list" with
+  and lst_t      = L.pointer_type 
+    (match L.type_by_name llm_graph "struct.list" with
       None -> raise (Failure "error: missing implementation for struct list")
     | Some t -> t)
-  and node_t  = L.pointer_type (match L.type_by_name llm_graph "struct.node" with
+  and node_t  = L.pointer_type 
+    (match L.type_by_name llm_graph "struct.node" with
       None -> raise (Failure "error: missing implementation for struct node")
     | Some t -> t)
-  and edge_t  = L.pointer_type (match L.type_by_name llm_graph "struct.edge" with
+  and edge_t  = L.pointer_type 
+    (match L.type_by_name llm_graph "struct.edge" with
       None -> raise (Failure "error: missing implementation for struct edge")
     | Some t -> t)
-  and graph_t      = L.pointer_type (match L.type_by_name llm_graph "struct.graph" with
+  and graph_t      = L.pointer_type 
+    (match L.type_by_name llm_graph "struct.graph" with
       None -> raise (Failure "error: missing implementation for struct graph")
     | Some t -> t)
   in
@@ -124,7 +128,7 @@ let translate (globals, functions) =
   let list_pop_front_f : L.llvalue =
       L.declare_function "list_pop_front" list_pop_front_t the_module in
 
-  let node_set_id_t : L.lltype = 
+  (* let node_set_id_t : L.lltype = 
       L.function_type void_ptr_t [| node_t ; i32_t|] in
   let node_set_id_f : L.llvalue =
       L.declare_function "node_set_id" node_set_id_t the_module in
@@ -142,7 +146,7 @@ let translate (globals, functions) =
   let node_get_val_t : L.lltype = 
       L.function_type void_ptr_t [| node_t |] in
   let node_get_val_f : L.llvalue =
-      L.declare_function "node_get_val" node_get_val_t the_module in
+      L.declare_function "node_get_val" node_get_val_t the_module in *)
 
   let graph_add_node_t : L.lltype = 
       L.function_type i32_t [| graph_t ; node_t |] in
@@ -161,9 +165,10 @@ let translate (globals, functions) =
         let name = fdecl.sfname
         and formal_types = 
     Array.of_list (List.map (fun (t,_) -> ltype_of_typ t) fdecl.sformals)
-        in let ftype = L.function_type (ltype_of_typ fdecl.styp) formal_types in
-        StringMap.add name (L.define_function name ftype the_module, fdecl) m in
-      List.fold_left function_decl StringMap.empty functions in
+        in let ftype = 
+          L.function_type (ltype_of_typ fdecl.styp) formal_types in
+        StringMap.add name (L.define_function name ftype the_module, fdecl) m 
+        in List.fold_left function_decl StringMap.empty functions in
     
     (* Fill in the body of the given function *)
     let build_function_body fdecl =
@@ -231,13 +236,15 @@ let translate (globals, functions) =
             | "val" -> 
             let val_ptr = L.build_struct_gep x' 1 "struct.ptr" builder in
             let ty = ltype_of_typ expr_typ in
-            let cast = L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
+            let cast = 
+              L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
             ignore (L.build_store e' cast builder); e'
             | "edges" -> 
               
               let p = L.build_struct_gep x' 2 "struct.ptr" builder in
               ignore(L.build_store e' p builder); e'
-            | _ -> raise (Failure "this should never happen, field error missed in semant"))
+            | _ -> raise (Failure 
+                  "this should never happen, field error missed in semant"))
         | SBinop ((A.Float,_ ) as e1, op, e2) ->
       let e1' = expr builder e1
       and e2' = expr builder e2 in
@@ -254,7 +261,8 @@ let translate (globals, functions) =
       | A.Greater -> L.build_fcmp L.Fcmp.Ogt
       | A.Geq     -> L.build_fcmp L.Fcmp.Oge
       | A.And | A.Or ->
-          raise (Failure "internal error: semant should have rejected and/or on float")
+          raise (Failure 
+            "internal error: semant should have rejected and/or on float")
       ) e1' e2' "tmp" builder
         | SBinop (e1, op, e2) ->
       let e1' = expr builder e1
@@ -286,29 +294,21 @@ let translate (globals, functions) =
       | SCall ("printf", [e]) -> 
 	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
-      | SCall ("list_index", [(List(t), l) as ls; e]) -> 
+      | SListIndex ((A.List(t), _) as ls, e) -> 
         let ptr = (L.build_call list_index_f 
           [|expr builder ls; expr builder e |] "list_index" builder)
           and ty = (L.pointer_type (ltype_of_typ t)) in 
               if L.is_null ptr then (
-                raise (Failure ("error: trying to index uninitialized list") ) )
+                raise (Failure ("error: trying to index uninitialized list")))
                 (* match t with
                 A.Int -> L.const_int i32_t 0
               | A.Float -> L.const_float float_t 0.0 
               | _ -> raise (Failure "NULL not implemented for this list index")) *)
           else (let cast = L.build_bitcast ptr ty "cast" builder in 
         L.build_load cast "val" builder)
-      | SCall ("list_empty", [ List(t), l ]) -> 
-        let ptr = (L.build_call list_empty_f 
-          [| expr builder (A.List(t), l) |] "list_empty" builder)
-          and ty = (L.pointer_type (ltype_of_typ t)) in 
-              if L.is_null ptr then (
-                raise (Failure ("error: trying to see if unitialized list is empty" ) ) )
-                (* match t with
-                A.Int -> L.const_int i32_t 0
-              | A.Float -> L.const_float float_t 0.0 
-              | _ -> raise (Failure "NULL not implemented for this list index")) *)
-          else let cast = L.build_bitcast ptr i32_t "cast" builder in
+      | SListIndex(_) -> raise (Failure 
+          ("this should never happen, error in semant"))
+      | SCall ("list_empty", [ A.List(t), l ]) -> 
             L.build_call list_empty_f 
           [| expr builder (t, l) |] "list_empty" builder
       | SCall ("list_push_back", [(A.List(t),l); e]) -> 
@@ -325,24 +325,26 @@ let translate (globals, functions) =
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
            L.build_call list_push_front_f 
           [| expr builder (t, l); cast|] "list_push_front" builder
-      | SCall ("list_pop_back", [ (List(t), l) ]) -> 
+      | SCall ("list_pop_back", [ (A.List(t), l) ]) -> 
         let ptr = (L.build_call list_pop_back_f 
-          [| expr builder (List(t), l) |] "list_pop_back" builder)
+          [| expr builder (A.List(t), l) |] "list_pop_back" builder)
           and ty = (L.pointer_type (ltype_of_typ t)) in 
               if L.is_null ptr then (
-                raise (Failure ("error: trying to pop from uninitialized list") ) )
+                raise (Failure 
+                  ("error: trying to pop from uninitialized list")))
                 (* match t with
                 A.Int -> L.const_int i32_t 0
               | A.Float -> L.const_float float_t 0.0 
               | _ -> raise (Failure "NULL not implemented for this list index")) *)
           else (let cast = L.build_bitcast ptr ty "cast" builder in 
         L.build_load cast "val" builder)
-      | SCall ("list_pop_front", [ (List(t), l) ]) -> 
+      | SCall ("list_pop_front", [ (A.List(t), l) ]) -> 
         let ptr = (L.build_call list_pop_front_f 
-          [| expr builder (List(t), l) |] "list_pop_front" builder)
+          [| expr builder (A.List(t), l) |] "list_pop_front" builder)
           and ty = (L.pointer_type (ltype_of_typ t)) in 
               if L.is_null ptr then (
-                raise (Failure ("error: trying to pop from uninitialized list") ) )
+                raise (Failure 
+                  ("error: trying to pop from uninitialized list") ) )
                 (* match t with
                 A.Int -> L.const_int i32_t 0
               | A.Float -> L.const_float float_t 0.0 
@@ -382,11 +384,13 @@ let translate (globals, functions) =
           | "val" -> 
           (let void_ptr = L.build_struct_gep s' 1 "struct.ptr" builder in
           let ty = ltype_of_typ expr_typ in
-          let cast = L.build_bitcast void_ptr (L.pointer_type ty) "cast" builder in
+          let cast = 
+            L.build_bitcast void_ptr (L.pointer_type ty) "cast" builder in
           L.build_load cast ("struct.val." ^ x ^ ".value") builder)
           | "edges" -> 
             (let p = L.build_struct_gep s' 2 "struct.ptr" builder in
-            L.build_load p ("struct.val." ^ x ) builder) )
+            L.build_load p ("struct.val." ^ x ) builder) 
+          | _ -> raise (Failure ("this should never happen, error in semant")))
       | SDEdge (n1, n2) -> let n1p = expr builder n1 and
                                n2p = expr builder n2 in 
          let fedgep = L.build_call edge_init_f
@@ -528,17 +532,18 @@ let translate (globals, functions) =
         (* Implement for loops as while loops *)
         | SFor (e1, e2, e3, body) -> stmt builder
         ( SBlock [SExpr e1 ; SWhile (e2, SBlock [body ; SExpr e3]) ] )
-        | SDeclare(A.List(t), s, _) -> 
+        | SDeclare(A.List(_), s, _) -> 
             let ptr = L.build_call list_init_f [| |] "init_list" builder in
             ignore (L.build_store ptr (lookup s) builder); builder
-        | SDeclare(A.Graph(t), s, _) -> 
+        | SDeclare(A.Graph(_), s, _) -> 
             let ptr = L.build_call graph_init_f [| |] "init_graph" builder in
             ignore (L.build_store ptr (lookup s) builder); builder
-        | SDeclare(A.Node(t), s, _) ->
+        | SDeclare(A.Node(_), s, _) ->
           (* INIT EDGELIST HERE *)
             let ptr = L.build_call node_init_f [| |] "init_node" builder in
             ignore (L.build_store ptr (lookup s) builder); builder 
         | SDeclare(_, _, a) -> ignore(expr builder a); builder
+        | SContinue | SBreak -> raise (Failure ("error: continue/break"))
         
       in
   

@@ -17,6 +17,7 @@ and sx =
   | SUEdgeC of sexpr * sexpr * sexpr
   | SDEdge of sexpr * sexpr
   | SDEdgeC of sexpr * sexpr * sexpr
+  | SListIndex of sexpr * sexpr
 
 type sstmt = 
     SExpr of sexpr
@@ -50,7 +51,8 @@ let rec string_of_sexpr (t, e) =
   | SBinop(e1, o, e2) -> 
       string_of_sexpr e1 ^ " " ^ string_of_binop o ^ " " ^ string_of_sexpr e2
   | SAssign(s, e) -> s ^ " = " ^ string_of_sexpr e
-  | SAssignField(x, s, e) -> string_of_sexpr x ^ "." ^ s ^ " = " ^ string_of_sexpr e
+  | SAssignField(x, s, e) -> string_of_sexpr x ^ "." 
+        ^ s ^ " = " ^ string_of_sexpr e
   | SCall(f, el) -> 
       f ^ "(" ^ String.concat ", " (List.map string_of_sexpr el) ^ ")"
   | SAccess(x, s) -> string_of_sexpr x ^ "." ^ s
@@ -61,6 +63,7 @@ let rec string_of_sexpr (t, e) =
   | SDEdge(n1, n2) -> string_of_sexpr n1 ^ " ~> " ^ string_of_sexpr n2
   | SDEdgeC(n1, e, n2) -> string_of_sexpr n1 ^ " ~(" ^ string_of_sexpr e 
                           ^ ")>> " ^ string_of_sexpr n2
+  | SListIndex(l, i) -> string_of_sexpr l ^ "[" ^ string_of_sexpr i ^ "]"
   ) ^ ")"
       
 let rec string_of_sstmt = function
