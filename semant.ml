@@ -190,19 +190,20 @@ let check (globals, functions) =
           let err = "error: illegal assignment " ^ string_of_typ lt ^ " = " ^
                     string_of_typ rt ^ " in " ^ string_of_expr ex
           in (check_assign lt rt err, SAssign(x, (rt, e')))
-      | AssignField(x, s, e) as ex -> let (lt, it) = (match type_of_identifier x with
-              Node(t) -> t, List(Int)
+      | AssignField(x, s, e) as ex -> let sx = expr x in 
+            let (lt, it) = (match sx with
+              (Node(t), _) -> t, List(Int)
             | _ -> raise (Failure ("error: cannot access this type")))
           and (rt, e') = expr e in
           let err = "error: illegal assignment " ^ string_of_typ lt ^ " = "
                   ^ string_of_typ rt ^ " in " ^ string_of_expr ex
           in (match s with 
               "val" -> 
-                (check_assign lt rt err, SAssignField(x, s, (rt, e')))
+                (check_assign lt rt err, SAssignField(sx, s, (rt, e')))
             | "id" ->
-                (check_assign Int rt err, SAssignField(x, s, (rt, e')))
+                (check_assign Int rt err, SAssignField(sx, s, (rt, e')))
             | "edges" -> 
-                (check_assign it rt err, SAssignField(x, s, (rt, e')))
+                (check_assign it rt err, SAssignField(sx, s, (rt, e')))
             | _ -> raise (Failure (err)))
       (* split generalized function into specific function *)
       | Call("empty", ([Id(l)] as el)) as call -> let sub_func = (match type_of_identifier l with
@@ -395,34 +396,34 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(f, args))
-      | Access(x, s) -> let t = type_of_identifier x in (match t with
-            Node(tn) -> (match s with 
-                "val" -> (tn, SAccess(x, s))
-              | "id"  -> (Int, SAccess(x, s))
-              | "edges" -> (List(Edge(Int)), SAccess(x, s))
+      | Access(x, s) -> let sx = expr x in (match sx with
+            (Node(tn), _) -> (match s with 
+                "val" -> (tn, SAccess(sx, s))
+              | "id"  -> (Int, SAccess(sx, s))
+              | "edges" -> (List(Edge(Int)), SAccess(sx, s))
               | _ -> raise (Failure ("error: invalid field")))
           | _ -> raise (Failure ("error: this type does not have this field: " ^ s)))
       | Noexpr -> (Void, SNoexpr)
-      | UEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
-          with 
-            (Node(a), Node(b)) when a = b -> (Edge(Node(a)), SUEdge(n1, n2))
+      | UEdge(n1, n2) -> let sn1 = expr n1 and
+                             sn2 = expr n2 in (match (sn1, sn2) with 
+            ((Node(a), _),  (Node(b), _)) when a = b -> (Edge(Node(a)), SUEdge(sn1, sn2))
           | _ -> raise (Failure ("error: UEdge fail")))
 
-     | UEdgeC(n1, e, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
-                         with 
-                           (Node(a), Node(b)) when a = b -> (Edge(Node(a)), SUEdgeC(n1, expr e, n2))
-                         | _ -> raise (Failure ("error: UEdgeC fail")))
+     | UEdgeC(n1, e, n2) -> let sn1 = expr n1 and
+                                sn2 = expr n2 in (match (sn1, sn2) with
+            ((Node(a), _),  (Node(b), _)) when a = b -> (Edge(Node(a)), SUEdgeC(sn1, expr e, sn2))
+          | _ -> raise (Failure ("error: UEdgeC fail")))
 
-      | DEdge(n1, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
-                         with 
-                           (Node(a), Node(b)) when a = b -> (Edge(Node(a)), SDEdge(n1, n2))
-                         | _ -> raise (Failure ("error: DEdge fail")))
+      | DEdge(n1, n2) -> let sn1 = expr n1 and
+                             sn2 = expr n2 in (match (sn1, sn2) with
+            ((Node(a), _),  (Node(b), _)) when a = b -> (Edge(Node(a)), SDEdge(sn1, sn2))
+          | _ -> raise (Failure ("error: DEdge fail")))
 
-      | DEdgeC(n1, e, n2) -> (match (type_of_identifier n1, type_of_identifier n2)
-                         with 
-                           (Node(a), Node(b)) when a = b -> 
-                              (Edge(Node(a)), SDEdgeC(n1, expr e, n2))
-                         | _ -> raise (Failure ("error: DEdgeC fail")))
+      | DEdgeC(n1, e, n2) -> let sn1 = expr n1 and
+                                  sn2 = expr n2 in (match (sn1, sn2) with
+            ((Node(a), _),  (Node(b), _)) when a = b -> 
+              (Edge(Node(a)), SDEdgeC(sn1, expr e, sn2))
+          | _ -> raise (Failure ("error: DEdgeC fail")))
     in
 
     let check_bool_expr e =

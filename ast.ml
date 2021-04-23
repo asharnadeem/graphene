@@ -35,15 +35,15 @@ type expr =
   | Unop of unop * expr
   | Binop of expr * binop * expr
   | Assign of string * expr
-  | AssignField of string * string * expr
+  | AssignField of expr * string * expr
   | Call of string * expr list
-  | Access of string * string
+  | Access of expr * string
   (* | Index of expr * expr *)
   | Noexpr
-  | UEdge of string * string
-  | UEdgeC of string * expr * string
-  | DEdge of string * string
-  | DEdgeC of string * expr * string
+  | UEdge of expr * expr
+  | UEdgeC of expr * expr * expr
+  | DEdge of expr * expr
+  | DEdgeC of expr * expr * expr
 
 type bind = typ * string
 
@@ -116,16 +116,18 @@ let rec string_of_expr = function
   | Binop(e1, o, e2) -> string_of_expr e1 ^ " " ^ 
     string_of_binop o ^ " " ^ string_of_expr e2
   | Assign(x, e) -> x ^ " = " ^ string_of_expr e
-  | AssignField(x, s, e) -> x ^ "." ^ s ^ " = " ^ string_of_expr e
+  | AssignField(x, s, e) -> string_of_expr x ^ "." ^ s ^ " = " ^ string_of_expr e
   | Call(f, el) -> 
     f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
-  | Access(x, s) -> x ^ "." ^ s
+  | Access(x, s) -> string_of_expr x ^ "." ^ s
   (* | Index(x, e) -> string_of_expr x ^ "[" ^ string_of_expr e ^ "]" *)
   | Noexpr -> ""
-  | UEdge(n1, n2) -> n1 ^ " ~~ " ^ n2 
-  | UEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_expr e ^ ")~ " ^ n2
-  | DEdge(n1, n2) -> n1 ^ " ~> " ^ n2
-  | DEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_expr e ^ ")>> " ^ n2
+  | UEdge(n1, n2) -> string_of_expr n1 ^ " ~~ " ^ string_of_expr n2 
+  | UEdgeC(n1, e, n2) -> string_of_expr n1 ^ " ~(" ^ string_of_expr e 
+                          ^ ")~ " ^ string_of_expr n2
+  | DEdge(n1, n2) -> string_of_expr n1 ^ " ~> " ^ string_of_expr n2
+  | DEdgeC(n1, e, n2) -> string_of_expr n1 ^ " ~(" ^ string_of_expr e 
+                          ^ ")>> " ^ string_of_expr n2
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"

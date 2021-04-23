@@ -48,7 +48,7 @@ let translate (globals, functions) =
   
 
    (* Return the LLVM type for a Graphene type *)
-  let rec ltype_of_typ = function
+  let ltype_of_typ = function
       A.Int      -> i32_t
     | A.String   -> string_t
     | A.Float    -> float_t
@@ -220,20 +220,22 @@ let translate (globals, functions) =
         | SId s       -> L.build_load (lookup s) s builder
         | SAssign (s, e) -> let e' = expr builder e in
                             ignore(L.build_store e' (lookup s) builder); e'
-        | SAssignField (x, s, e) -> let e' = expr builder e in 
+        | SAssignField (x, s, e) -> let e' = expr builder e and
+                                        x' = expr builder x in 
+           
             (match s with
               "id" -> 
-              let str = L.build_load (lookup x) "struct" builder in
-              let p = L.build_struct_gep str 0 "struct.ptr" builder in
+              
+              let p = L.build_struct_gep x' 0 "struct.ptr" builder in
             ignore(L.build_store e' p builder); e'
-            | "val" -> let str = L.build_load (lookup x) "struct" builder in
-            let val_ptr = L.build_struct_gep str 1 "struct.ptr" builder in
+            | "val" -> 
+            let val_ptr = L.build_struct_gep x' 1 "struct.ptr" builder in
             let ty = ltype_of_typ expr_typ in
             let cast = L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
             ignore (L.build_store e' cast builder); e'
             | "edges" -> 
-              let str = L.build_load (lookup x) "struct" builder in 
-              let p = L.build_struct_gep str 2 "struct.ptr" builder in
+              
+              let p = L.build_struct_gep x' 2 "struct.ptr" builder in
               ignore(L.build_store e' p builder); e'
             | _ -> raise (Failure "this should never happen, field error missed in semant"))
         | SBinop ((A.Float,_ ) as e1, op, e2) ->
@@ -284,9 +286,9 @@ let translate (globals, functions) =
       | SCall ("printf", [e]) -> 
 	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
-      | SCall ("list_index", [(List(t), l); e]) -> 
+      | SCall ("list_index", [(List(t), l) as ls; e]) -> 
         let ptr = (L.build_call list_index_f 
-          [|expr builder (List(t), l); expr builder e |] "list_index" builder)
+          [|expr builder ls; expr builder e |] "list_index" builder)
           and ty = (L.pointer_type (ltype_of_typ t)) in 
               if L.is_null ptr then (
                 raise (Failure ("error: trying to index uninitialized list") ) )
@@ -309,22 +311,14 @@ let translate (globals, functions) =
           else let cast = L.build_bitcast ptr i32_t "cast" builder in
             L.build_call list_empty_f 
           [| expr builder (t, l) |] "list_empty" builder
-      | SCall ("list_push_back", [(A.List(t),l); e]) -> (*let list_type = match t with
-          A.List(A.Int) -> L.const_int i32_t 1
-        | A.List(A.Float) -> L.const_int i32_t 2
-        | _ -> L.const_int (ltype_of_typ t) 0
-        in  *)
+      | SCall ("list_push_back", [(A.List(t),l); e]) -> 
         let e' = expr builder e in
         let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
         ignore (L.build_store e' ptr builder); 
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
           L.build_call list_push_back_f 
           [| expr builder (t, l); cast|] "list_push_back" builder
-      | SCall ("list_push_front", [(A.List(t),l); e]) -> (*let list_type = match t with
-          A.List(A.Int) -> L.const_int i32_t 1
-        | A.List(A.Float) -> L.const_int i32_t 2
-        | _ -> L.const_int (ltype_of_typ t) 0
-        in  *)
+      | SCall ("list_push_front", [(A.List(t),l); e]) -> 
         let e' = expr builder e in
         let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
         ignore (L.build_store e' ptr builder); 
@@ -380,21 +374,21 @@ let translate (globals, functions) =
             A.Void -> ""
           | _ -> f ^ "_result") in
            L.build_call fdef (Array.of_list llargs) result builder
-      | SAccess (s, x) -> 
+      | SAccess (s, x) -> let s' = expr builder s in 
           (match x with
-            "id" -> (let str = L.build_load (lookup s) "struct" builder in 
-            let p = L.build_struct_gep str 0 "struct.ptr" builder in
+            "id" -> 
+            (let p = L.build_struct_gep s' 0 "struct.ptr" builder in
           L.build_load p ("struct.val." ^ x) builder)
-          | "val" -> let str = L.build_load (lookup s) "struct" builder in 
-          (let void_ptr = L.build_struct_gep str 1 "struct.ptr" builder in
+          | "val" -> 
+          (let void_ptr = L.build_struct_gep s' 1 "struct.ptr" builder in
           let ty = ltype_of_typ expr_typ in
           let cast = L.build_bitcast void_ptr (L.pointer_type ty) "cast" builder in
           L.build_load cast ("struct.val." ^ x ^ ".value") builder)
-          | "edges" -> let str = L.build_load (lookup s) "struct" builder in
-            let p = L.build_struct_gep str 2 "struct.ptr" builder in
-            L.build_load p ("struct.val." ^ x ) builder)
-      | SDEdge (n1, n2) -> let n1p = L.build_load (lookup n1) "node1" builder and
-                               n2p = L.build_load (lookup n2) "node2" builder in
+          | "edges" -> 
+            (let p = L.build_struct_gep s' 2 "struct.ptr" builder in
+            L.build_load p ("struct.val." ^ x ) builder) )
+      | SDEdge (n1, n2) -> let n1p = expr builder n1 and
+                               n2p = expr builder n2 in 
          let fedgep = L.build_call edge_init_f
           [|L.const_int i32_t 0; n2p; L.const_int i32_t 1 |] 
           "edge_init" builder and
@@ -414,8 +408,8 @@ let translate (globals, functions) =
         L.build_call list_push_back_f
             [| n2ell; cast2|] "edge_push" builder;
       | SDEdgeC (n1, e, n2) -> let e' = expr builder e in 
-          let n1p = L.build_load (lookup n1) "node1" builder and                           
-              n2p = L.build_load (lookup n2) "node2" builder in
+          let n1p = expr builder n1 and
+              n2p = expr builder n2 in 
           let fedgep = L.build_call edge_init_f
           [|e'; n2p; L.const_int i32_t 1 |] 
           "edge_init" builder and
@@ -435,8 +429,8 @@ let translate (globals, functions) =
         L.build_call list_push_back_f
             [| n2ell; cast2|] "edge_push" builder;
       
-      | SUEdge (n1, n2) -> let n1p = L.build_load (lookup n1) "node1" builder and                           
-              n2p = L.build_load (lookup n2) "node2" builder in
+      | SUEdge (n1, n2) -> let n1p = expr builder n1 and
+                               n2p = expr builder n2 in 
           let fedgep = L.build_call edge_init_f
           [|L.const_int i32_t 0; n2p; L.const_int i32_t 1 |] 
           "edge_init" builder and
@@ -456,8 +450,8 @@ let translate (globals, functions) =
         L.build_call list_push_back_f
             [| n2ell; cast2|] "edge_push" builder;
       | SUEdgeC (n1, e, n2) -> let e' = expr builder e in 
-          let n1p = L.build_load (lookup n1) "node1" builder and                           
-              n2p = L.build_load (lookup n2) "node2" builder in
+          let n1p = expr builder n1 and
+              n2p = expr builder n2 in 
           let fedgep = L.build_call edge_init_f
           [|e'; n2p; L.const_int i32_t 1 |] 
           "edge_init" builder and

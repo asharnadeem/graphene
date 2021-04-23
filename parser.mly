@@ -18,7 +18,9 @@
 
 %nonassoc NOELSE
 %nonassoc ELSE
-%right ASSIGN
+%right ASSIGN 
+%right DIREDGE UNDIREDGE TILDE DGT
+%right DOT
 %left OR
 %left AND
 %left EQ NEQ
@@ -111,24 +113,24 @@ expr:
   | MINUS expr %prec NOT { Unop(Neg, $2) }
   | NOT expr { Unop(Not, $2) }
   | ID ASSIGN expr { Assign($1, $3) }
-  | ID DOT ID ASSIGN expr { AssignField($1, $3, $5) }
+  | expr DOT ID ASSIGN expr { AssignField($1, $3, $5) }
   | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
   /* nodeA ~~ nodeB */
-  | ID UNDIREDGE ID { UEdge($1, $3) }
+  | expr UNDIREDGE expr { UEdge($1, $3) }
   /* nodeA ~(5)~ nodeB */
-  | ID TILDE LPAREN literal RPAREN TILDE ID { UEdgeC($1, $4, $7) }
+  | expr TILDE LPAREN expr RPAREN TILDE expr { UEdgeC($1, $4, $7) }
   /* nodeA ~>> nodeB */ 
-  | ID DIREDGE ID { DEdge($1, $3) }
+  | expr DIREDGE expr { DEdge($1, $3) }
   /* nodeA ~(5)>> nodeB */
-  | ID TILDE LPAREN literal RPAREN DGT ID { DEdgeC($1, $4, $7) }
+  | expr TILDE LPAREN expr RPAREN DGT expr { DEdgeC($1, $4, $7) }
   /* node.id */ 
-  | ID DOT ID { Access($1, $3) } 
+  | expr DOT ID { Access($1, $3) } 
   /* queue[3] */
   | ID LSQUARE args_opt RSQUARE { Call("list_index", Id($1) :: $3) }
   /* [1,2,3,4,5] 
   Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
-  | ID DOT ID LPAREN args_opt RPAREN { Call( $3, Id($1) :: $5 ) }
+  | expr DOT ID LPAREN args_opt RPAREN { Call( $3, $1 :: $5 ) }
 
 literal:
     ID { Id($1) }

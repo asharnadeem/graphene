@@ -9,14 +9,14 @@ and sx =
   | SUnop of unop * sexpr
   | SBinop of sexpr * binop * sexpr
   | SAssign of string * sexpr
-  | SAssignField of string * string * sexpr
+  | SAssignField of sexpr * string * sexpr
   | SCall of string * sexpr list
-  | SAccess of string * string
+  | SAccess of sexpr * string
   | SNoexpr
-  | SUEdge of string * string
-  | SUEdgeC of string * sexpr * string
-  | SDEdge of string * string
-  | SDEdgeC of string * sexpr * string
+  | SUEdge of sexpr * sexpr
+  | SUEdgeC of sexpr * sexpr * sexpr
+  | SDEdge of sexpr * sexpr
+  | SDEdgeC of sexpr * sexpr * sexpr
 
 type sstmt = 
     SExpr of sexpr
@@ -50,15 +50,17 @@ let rec string_of_sexpr (t, e) =
   | SBinop(e1, o, e2) -> 
       string_of_sexpr e1 ^ " " ^ string_of_binop o ^ " " ^ string_of_sexpr e2
   | SAssign(s, e) -> s ^ " = " ^ string_of_sexpr e
-  | SAssignField(x, s, e) -> x ^ "." ^ s ^ " = " ^ string_of_sexpr e
+  | SAssignField(x, s, e) -> string_of_sexpr x ^ "." ^ s ^ " = " ^ string_of_sexpr e
   | SCall(f, el) -> 
       f ^ "(" ^ String.concat ", " (List.map string_of_sexpr el) ^ ")"
-  | SAccess(x, s) -> x ^ "." ^ s
+  | SAccess(x, s) -> string_of_sexpr x ^ "." ^ s
   | SNoexpr -> ""
-  | SUEdge(n1, n2) -> n1 ^ " ~~ " ^ n2
-  | SUEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_sexpr e ^ ")~ " ^ n2
-  | SDEdge(n1, n2) -> n1 ^ " ~> " ^ n2
-  | SDEdgeC(n1, e, n2) -> n1 ^ " ~(" ^ string_of_sexpr e ^ ")>> " ^ n2
+  | SUEdge(n1, n2) -> string_of_sexpr n1 ^ " ~~ " ^ string_of_sexpr n2
+  | SUEdgeC(n1, e, n2) -> string_of_sexpr n1 ^ " ~(" ^ string_of_sexpr e 
+                          ^ ")~ " ^ string_of_sexpr n2
+  | SDEdge(n1, n2) -> string_of_sexpr n1 ^ " ~> " ^ string_of_sexpr n2
+  | SDEdgeC(n1, e, n2) -> string_of_sexpr n1 ^ " ~(" ^ string_of_sexpr e 
+                          ^ ")>> " ^ string_of_sexpr n2
   ) ^ ")"
       
 let rec string_of_sstmt = function
