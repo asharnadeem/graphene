@@ -441,25 +441,25 @@ let check (globals, functions) =
       | UEdge(n1, n2) -> let sn1 = expr n1 and
                              sn2 = expr n2 in (match (sn1, sn2) with 
             ((Node(a), _),  (Node(b), _)) when a = b -> 
-                    (Edge(Node(a)), SUEdge(sn1, sn2))
+                    (Node(a), SUEdge(sn1, sn2))
           | _ -> raise (Failure ("error: UEdge fail")))
 
      | UEdgeC(n1, e, n2) -> let sn1 = expr n1 and
                                 sn2 = expr n2 in (match (sn1, sn2) with
             ((Node(a), _),  (Node(b), _)) when a = b -> 
-                    (Edge(Node(a)), SUEdgeC(sn1, expr e, sn2))
+                    (Node(a), SUEdgeC(sn1, expr e, sn2))
           | _ -> raise (Failure ("error: UEdgeC fail")))
 
       | DEdge(n1, n2) -> let sn1 = expr n1 and
                              sn2 = expr n2 in (match (sn1, sn2) with
             ((Node(a), _),  (Node(b), _)) when a = b -> 
-                    (Edge(Node(a)), SDEdge(sn1, sn2))
+                    (Node(a), SDEdge(sn1, sn2))
           | _ -> raise (Failure ("error: DEdge fail")))
 
       | DEdgeC(n1, e, n2) -> let sn1 = expr n1 and
                                   sn2 = expr n2 in (match (sn1, sn2) with
             ((Node(a), _),  (Node(b), _)) when a = b -> 
-              (Edge(Node(a)), SDEdgeC(sn1, expr e, sn2))
+              (Node(a), SDEdgeC(sn1, expr e, sn2))
           | _ -> raise (Failure ("error: DEdgeC fail")))
       | ListIndex(l, i) -> let l' = expr l and 
                                i' = expr i in (match (l', i') with

@@ -1,5 +1,6 @@
 int main() {
-    node<int> n, o, p;
+    node<int> n, o, p, q;
+    q -> o -> p;
     n.val = 20;
     n.id = 30;
     list<int> l;

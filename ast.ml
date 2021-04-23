@@ -124,12 +124,13 @@ let rec string_of_expr = function
   | Access(x, s) -> string_of_expr x ^ "." ^ s
   (* | Index(x, e) -> string_of_expr x ^ "[" ^ string_of_expr e ^ "]" *)
   | Noexpr -> ""
-  | UEdge(n1, n2) -> string_of_expr n1 ^ " <-> " ^ string_of_expr n2 
-  | UEdgeC(n1, e, n2) -> string_of_expr n1 ^ " <->[" ^ string_of_expr e 
-                          ^ "] " ^ string_of_expr n2
-  | DEdge(n1, n2) -> string_of_expr n1 ^ " -> " ^ string_of_expr n2
-  | DEdgeC(n1, e, n2) -> string_of_expr n1 ^ " -> [" ^ string_of_expr e 
-                          ^ "] " ^ string_of_expr n2
+  | UEdge(n1, n2) -> "(" ^ string_of_expr n1 ^ " <-> " 
+                          ^ string_of_expr n2 ^ ")"
+  | UEdgeC(n1, e, n2) -> "(" ^ string_of_expr n1 ^ " <->[" ^ string_of_expr e 
+                          ^ "] " ^ string_of_expr n2 ^ ")"
+  | DEdge(n1, n2) -> "(" ^ string_of_expr n1 ^ " -> " ^ string_of_expr n2 ^ ")"
+  | DEdgeC(n1, e, n2) -> "(" ^ string_of_expr n1 ^ " -> [" ^ string_of_expr e 
+                          ^ "] " ^ string_of_expr n2 ^ ")"
   | ListIndex(l, i) -> string_of_expr l ^ "[" ^ string_of_expr i ^ "]"
 
 let rec string_of_stmt = function

@@ -419,8 +419,9 @@ let translate (globals, functions) =
             "cast" builder in
         ignore (L.build_call list_push_back_f 
             [| n1ell; cast1|] "edge_push" builder);
-        L.build_call list_push_back_f
-            [| n2ell; cast2|] "edge_push" builder;
+        ignore (L.build_call list_push_back_f
+            [| n2ell; cast2|] "edge_push" builder);
+            expr builder n1;
       | SDEdgeC (n1, e, n2) -> let e' = expr builder e in 
           let n1p = expr builder n1 and
               n2p = expr builder n2 in 
@@ -440,8 +441,9 @@ let translate (globals, functions) =
             "cast" builder in
         ignore (L.build_call list_push_back_f 
             [| n1ell; cast1|] "edge_push" builder);
-        L.build_call list_push_back_f
-            [| n2ell; cast2|] "edge_push" builder;
+        ignore(L.build_call list_push_back_f
+            [| n2ell; cast2|] "edge_push" builder);
+            expr builder n1;
       
       | SUEdge (n1, n2) -> let n1p = expr builder n1 and
                                n2p = expr builder n2 in 
@@ -461,8 +463,9 @@ let translate (globals, functions) =
             "cast" builder in
         ignore (L.build_call list_push_back_f 
             [| n1ell; cast1|] "edge_push" builder);
-        L.build_call list_push_back_f
-            [| n2ell; cast2|] "edge_push" builder;
+        ignore (L.build_call list_push_back_f
+            [| n2ell; cast2|] "edge_push" builder);
+            expr builder n1
       | SUEdgeC (n1, e, n2) -> let e' = expr builder e in 
           let n1p = expr builder n1 and
               n2p = expr builder n2 in 
@@ -482,8 +485,10 @@ let translate (globals, functions) =
             "cast" builder in
         ignore (L.build_call list_push_back_f 
             [| n1ell; cast1|] "edge_push" builder);
-        L.build_call list_push_back_f
-            [| n2ell; cast2|] "edge_push" builder;
+        ignore (L.build_call list_push_back_f
+            [| n2ell; cast2|] "edge_push" builder);
+        expr builder n1
+            
       in
       
     (* LLVM insists each basic block end with exactly one "terminator" 
