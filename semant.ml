@@ -130,8 +130,12 @@ let check (globals, functions) =
     let rec concat_statements locals = function
         [] -> locals
       | h::t -> concat_statements (match h with
-                    Declare(t, x, e) -> ignore e; (t, x) :: locals
-                  | _ -> locals) t
+                  Declare(t, x, Noexpr) -> 
+                    List.fold_left (fun l s -> (t, s)::l) locals x
+                | Declare(t, ([x] as l), _) when List.length l = 1
+                    -> (t, x) :: locals
+                    (* Declare(t, x, e) -> ignore e; (t, x) :: locals *)
+                | _ -> locals) t
     in
     (* Local symbol table for function *)
     let symbols = List.fold_left (fun m (t, x) -> StringMap.add x t m) 
@@ -496,11 +500,13 @@ let check (globals, functions) =
       | Continue -> SContinue
       | Break -> SBreak
       | Declare(t, x, Noexpr) -> SDeclare(t, x, (Void, SNoexpr))
-      | Declare(t, x, e) as d -> let (t', v) = expr e in
+      | Declare(t, l, e) as d when List.length l = 1 
+          -> let (t', v) = expr e in
           ignore v;
-          if t' = t then SDeclare(t, x, expr e)
+          if t' = t then SDeclare(t, l, (t', v))
           else raise (Failure ("error: assignment does not match value in " ^ 
                 string_of_stmt d ))
+      | Declare(_) -> raise (Failure ("error: invalid declaration"))
     in
     (* check_function finally complete *)
     { styp = func.typ;

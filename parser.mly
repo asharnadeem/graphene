@@ -4,7 +4,7 @@
 
 %token LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE COMMA SEMI COLON DOT
 %token PLUS MINUS TIMES DIVIDE MOD ASSIGN NOT EQ NEQ LT LEQ GT GEQ AND OR
-%token TILDE DIREDGE UNDIREDGE DGT
+%token TILDE DIREDGE UNDIREDGE DGT DEDGE UEDGE DEDGEP UEDGEP
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID
 %token <int> LITERAL
@@ -18,8 +18,8 @@
 
 %nonassoc NOELSE
 %nonassoc ELSE
-%right ASSIGN LSQUARE
-%right DIREDGE UNDIREDGE TILDE DGT
+%right ASSIGN LSQUARE RSQUARE
+%right DIREDGE UNDIREDGE TILDE DGT DEDGE UEDGE DEDGEP UEDGEP
 %right DOT
 %left OR
 %left AND
@@ -87,8 +87,12 @@ stmt:
 /*  | FOREACH LPAREN typ ID COLON expr RPAREN stmt { Foreach($3, $4, $6, $8) }
 */
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
-  | typ ID ASSIGN expr SEMI { Declare($1, $2, Assign($2, $4)) }
-  | typ ID SEMI { Declare($1, $2, Noexpr) }
+  | typ ID ASSIGN expr SEMI { Declare($1, [$2], Assign($2, $4)) }
+  | typ id_list SEMI { Declare($1, $2, Noexpr) }
+
+id_list:
+    ID                { [ $1 ] }
+  | id_list COMMA ID  { $3 :: $1 }
   
 
 expr_opt:
@@ -116,14 +120,18 @@ expr:
   | expr DOT ID ASSIGN expr { AssignField($1, $3, $5) }
   | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
-  /* nodeA ~~ nodeB */
-  | expr UNDIREDGE expr { UEdge($1, $3) }
-  /* nodeA ~(5)~ nodeB */
-  | expr TILDE LPAREN expr RPAREN TILDE expr { UEdgeC($1, $4, $7) }
-  /* nodeA ~>> nodeB */ 
-  | expr DIREDGE expr { DEdge($1, $3) }
-  /* nodeA ~(5)>> nodeB */
-  | expr TILDE LPAREN expr RPAREN DGT expr { DEdgeC($1, $4, $7) }
+  | expr DEDGE expr { DEdge( $1, $3) }
+  | expr DEDGE LSQUARE expr RSQUARE expr { DEdgeC( $1, $4, $6) }
+  | expr UEDGE expr { UEdge ( $1, $3) }
+  | expr UEDGE LSQUARE expr RSQUARE expr { UEdgeC( $1, $4, $6) }
+  /* nodeA ~~ nodeB 
+  | expr UNDIREDGE expr { UEdge($1, $3) } */
+  /* nodeA ~(5)~ nodeB 
+  | expr TILDE LPAREN expr RPAREN TILDE expr { UEdgeC($1, $4, $7) }*/
+  /* nodeA ~>> nodeB 
+  | expr DIREDGE expr { DEdge($1, $3) }*/ 
+  /* nodeA ~(5)>> nodeB 
+  | expr TILDE LPAREN expr RPAREN DGT expr { DEdgeC($1, $4, $7) }*/
   /* node.id */ 
   | expr DOT ID { Access($1, $3) } 
   /* queue[3] */

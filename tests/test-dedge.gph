@@ -1,7 +1,7 @@
 int main() {
   node<float> a;
   node<float> b;
-  b ~>> a;
+  b -> a;
   list<edge <int> > t;
   t = a.edges;
   list<edge <int> > s = a.edges;

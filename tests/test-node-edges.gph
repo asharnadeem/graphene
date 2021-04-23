@@ -1,10 +1,10 @@
 int main() {
-    node<int> n;
+    node<int> n, o, p;
     n.val = 20;
     n.id = 30;
     list<int> l;
     l.push_back(1);
     print(l[0]);
-    list<edge <int> > j = n.edges;
+    list<edge<int>> j = n.edges;
     return 0;
 }

@@ -28,7 +28,7 @@ type sstmt =
   | SWhile of sexpr * sstmt
   | SContinue
   | SBreak 
-  | SDeclare of typ * string * sexpr
+  | SDeclare of typ * string list * sexpr
   
 type sfunc_decl = {
     styp : typ;
@@ -57,12 +57,12 @@ let rec string_of_sexpr (t, e) =
       f ^ "(" ^ String.concat ", " (List.map string_of_sexpr el) ^ ")"
   | SAccess(x, s) -> string_of_sexpr x ^ "." ^ s
   | SNoexpr -> ""
-  | SUEdge(n1, n2) -> string_of_sexpr n1 ^ " ~~ " ^ string_of_sexpr n2
-  | SUEdgeC(n1, e, n2) -> string_of_sexpr n1 ^ " ~(" ^ string_of_sexpr e 
-                          ^ ")~ " ^ string_of_sexpr n2
-  | SDEdge(n1, n2) -> string_of_sexpr n1 ^ " ~> " ^ string_of_sexpr n2
-  | SDEdgeC(n1, e, n2) -> string_of_sexpr n1 ^ " ~(" ^ string_of_sexpr e 
-                          ^ ")>> " ^ string_of_sexpr n2
+  | SUEdge(n1, n2) -> string_of_sexpr n1 ^ " <-> " ^ string_of_sexpr n2
+  | SUEdgeC(n1, e, n2) -> string_of_sexpr n1 ^ " <-> [" ^ string_of_sexpr e 
+                          ^ "] " ^ string_of_sexpr n2
+  | SDEdge(n1, n2) -> string_of_sexpr n1 ^ " -> " ^ string_of_sexpr n2
+  | SDEdgeC(n1, e, n2) -> string_of_sexpr n1 ^ " ->[" ^ string_of_sexpr e 
+                          ^ "] " ^ string_of_sexpr n2
   | SListIndex(l, i) -> string_of_sexpr l ^ "[" ^ string_of_sexpr i ^ "]"
   ) ^ ")"
       
@@ -82,8 +82,13 @@ let rec string_of_sstmt = function
       string_of_sstmt ss
   | SContinue -> "continue;"
   | SBreak -> "break;"
-  | SDeclare(t, x, se) -> string_of_typ t ^ " " ^ x ^ "; " ^ 
-      string_of_sexpr se ^ ";\n"
+  | SDeclare(t, lx, (_,SNoexpr)) -> string_of_typ t ^ " " ^
+    (List.fold_left (fun l s  -> s ^ "; " ^ l) "" lx ) ^ "\n"
+  | SDeclare(t, ([x] as l), e) when (List.length l) = 1 -> string_of_typ t ^ " " ^ x ^ "; " 
+        ^ string_of_sexpr e ^ ";\n"
+  | SDeclare(_) -> "PARSING ERROR\n"
+  (* | SDeclare(t, x, se) -> string_of_typ t ^ " " ^ x ^ "; " ^ 
+      string_of_sexpr se ^ ";\n" *)
 
 let string_of_sfdecl fdecl =
   string_of_typ fdecl.styp ^ " " ^ 

@@ -58,7 +58,7 @@ type stmt =
   | While of expr * stmt
   | Continue
   | Break
-  | Declare of typ * string * expr
+  | Declare of typ * string list * expr
 
 type func_decl = {
     typ : typ;
@@ -124,12 +124,12 @@ let rec string_of_expr = function
   | Access(x, s) -> string_of_expr x ^ "." ^ s
   (* | Index(x, e) -> string_of_expr x ^ "[" ^ string_of_expr e ^ "]" *)
   | Noexpr -> ""
-  | UEdge(n1, n2) -> string_of_expr n1 ^ " ~~ " ^ string_of_expr n2 
-  | UEdgeC(n1, e, n2) -> string_of_expr n1 ^ " ~(" ^ string_of_expr e 
-                          ^ ")~ " ^ string_of_expr n2
-  | DEdge(n1, n2) -> string_of_expr n1 ^ " ~> " ^ string_of_expr n2
-  | DEdgeC(n1, e, n2) -> string_of_expr n1 ^ " ~(" ^ string_of_expr e 
-                          ^ ")>> " ^ string_of_expr n2
+  | UEdge(n1, n2) -> string_of_expr n1 ^ " <-> " ^ string_of_expr n2 
+  | UEdgeC(n1, e, n2) -> string_of_expr n1 ^ " <->[" ^ string_of_expr e 
+                          ^ "] " ^ string_of_expr n2
+  | DEdge(n1, n2) -> string_of_expr n1 ^ " -> " ^ string_of_expr n2
+  | DEdgeC(n1, e, n2) -> string_of_expr n1 ^ " -> [" ^ string_of_expr e 
+                          ^ "] " ^ string_of_expr n2
   | ListIndex(l, i) -> string_of_expr l ^ "[" ^ string_of_expr i ^ "]"
 
 let rec string_of_stmt = function
@@ -148,9 +148,11 @@ let rec string_of_stmt = function
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
   | Continue -> "continue;"
   | Break -> "break;"
-  | Declare(t, x, Noexpr) -> string_of_typ t ^ " " ^ x ^ ";\n"
-  | Declare(t, x, e) -> string_of_typ t ^ " " ^ x ^ "; " 
+  | Declare(t, lx, Noexpr) -> string_of_typ t ^ " " ^
+    (List.fold_left (fun l s -> s ^ "; " ^ l) "" lx ) ^ "\n"
+  | Declare(t, ([x] as l), e) when (List.length l) = 1 -> string_of_typ t ^ " " ^ x ^ "; " 
         ^ string_of_expr e ^ ";\n"
+  | Declare(_) -> "PARSING ERROR\n"
 
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"

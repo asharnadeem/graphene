@@ -37,10 +37,15 @@ rule token = parse
   | "||"                  { OR }
   | "!"                   { NOT }
 (* graph tokens *)
+  | "->"          { DEDGE }
+  | "<->"         { UEDGE }
+  | "->("         { DEDGEP }
+  | "<->("        { UEDGEP }
+  (*
   | "~>>"                 { DIREDGE }
   | ">>"                  { DGT }
   | "~~"                  { UNDIREDGE }
-  | "~"                   { TILDE }
+  | "~"                   { TILDE } *)
 
 (* keywords *)
   | "void"                { VOID }

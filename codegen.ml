@@ -201,8 +201,18 @@ let translate (globals, functions) =
         let rec gather_locals locals = function
             [] -> locals
           | h::t -> gather_locals (match h with
-                        SDeclare(t, s, _) -> (t, s) :: locals
-                      | _ -> locals) t
+              SDeclare(t, s, (_, Sast.SNoexpr)) -> 
+      List.fold_left (fun locs sl -> (t, sl) :: locs) locals s
+            | SDeclare(t, ([s] as l), _) when List.length l = 1 
+                          -> (t, s) :: locals
+            | _ -> locals) t
+
+                        (* SDeclare(t, s, (_, Sast.SNoexpr)) ->
+         (List.fold_left (fun ldec dec -> (t, dec) :: ldec) [] s)
+          :: locals
+                      | SDeclare(t, ([x] as l), _) when List.length l = 1 
+                          -> locals
+                      | _ -> locals) t *)
         in
         let complete_locals = gather_locals [] fdecl.sbody
         in
@@ -532,16 +542,16 @@ let translate (globals, functions) =
         (* Implement for loops as while loops *)
         | SFor (e1, e2, e3, body) -> stmt builder
         ( SBlock [SExpr e1 ; SWhile (e2, SBlock [body ; SExpr e3]) ] )
-        | SDeclare(A.List(_), s, _) -> 
+        | SDeclare(A.List(_), ll, _) -> List.iter (fun s -> 
             let ptr = L.build_call list_init_f [| |] "init_list" builder in
-            ignore (L.build_store ptr (lookup s) builder); builder
-        | SDeclare(A.Graph(_), s, _) -> 
+            ignore (L.build_store ptr (lookup s) builder)) ll; builder
+        | SDeclare(A.Graph(_), lg, _) -> List.iter (fun g -> 
             let ptr = L.build_call graph_init_f [| |] "init_graph" builder in
-            ignore (L.build_store ptr (lookup s) builder); builder
-        | SDeclare(A.Node(_), s, _) ->
+            ignore (L.build_store ptr (lookup g) builder)) lg ; builder
+        | SDeclare(A.Node(_), ln, _) -> List.iter (fun n -> 
           (* INIT EDGELIST HERE *)
             let ptr = L.build_call node_init_f [| |] "init_node" builder in
-            ignore (L.build_store ptr (lookup s) builder); builder 
+            ignore (L.build_store ptr (lookup n) builder)) ln ; builder 
         | SDeclare(_, _, a) -> ignore(expr builder a); builder
         | SContinue | SBreak -> raise (Failure ("error: continue/break"))
         
