@@ -455,7 +455,10 @@ let check (globals, functions) =
                 "val" -> (tn, SAccess(sx, s))
               | "id"  -> (Int, SAccess(sx, s))
               | "edges" -> (List(Edge(Int)), SAccess(sx, s))
-              | _ -> raise (Failure ("error: invalid field")))
+              | _ -> raise (Failure ("error: invalid node field " ^ s)))
+          | (List(_), _) -> (match s with 
+                "size" -> (Int, SAccess(sx, s))
+              | _ -> raise (Failure ("error: invalid list " ^ s)))
           | _ -> raise 
               (Failure ("error: this type does not have this field: " ^ s)))
       | Noexpr -> (Void, SNoexpr)

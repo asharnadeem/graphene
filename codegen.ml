@@ -384,20 +384,33 @@ let translate (globals, functions) =
           | _ -> f ^ "_result") in
            L.build_call fdef (Array.of_list llargs) result builder
       | SAccess (s, x) -> let s' = expr builder s in 
-          (match x with
-            "id" -> 
-            (let p = L.build_struct_gep s' 0 "struct.ptr" builder in
-          L.build_load p ("struct.val." ^ x) builder)
-          | "val" -> 
-          (let void_ptr = L.build_struct_gep s' 1 "struct.ptr" builder in
-          let ty = ltype_of_typ expr_typ in
-          let cast = 
-            L.build_bitcast void_ptr (L.pointer_type ty) "cast" builder in
-          L.build_load cast ("struct.val." ^ x ^ ".value") builder)
-          | "edges" -> 
-            (let p = L.build_struct_gep s' 2 "struct.ptr" builder in
-            L.build_load p ("struct.val." ^ x ) builder) 
-          | _ -> raise (Failure ("this should never happen, error in semant")))
+          (match s with 
+          (A.Node(t), _) ->
+            (match x with
+              "id" -> 
+              (let p = L.build_struct_gep s' 0 "struct.ptr" builder in
+            L.build_load p ("struct.val." ^ x) builder)
+            | "val" -> 
+            (let void_ptr = L.build_struct_gep s' 1 "struct.ptr" builder in
+            let ty = ltype_of_typ t in
+            let cast = 
+              L.build_bitcast void_ptr (L.pointer_type ty) "cast" builder in
+            L.build_load cast ("struct.val." ^ x ^ ".value") builder)
+            | "edges" -> 
+              (let p = L.build_struct_gep s' 2 "struct.ptr" builder in
+              L.build_load p ("struct.val." ^ x ) builder) 
+            | _ -> raise (Failure 
+                ("this should never happen, error in semant")))
+        | (A.List(_), _) -> 
+            (match x with
+              "size" -> (let p = L.build_struct_gep s' 0 "struct.ptr" builder 
+              in L.build_load p ("struct.val." ^ x) builder)
+            | _ -> raise 
+                (Failure "this should never happen, error in semant")
+              )
+        | _ -> raise (Failure "internal error")
+          )
+          
       | SDEdge (n1, n2) -> let n1p = expr builder n1 and
                                n2p = expr builder n2 in 
          let fedgep = L.build_call edge_init_f

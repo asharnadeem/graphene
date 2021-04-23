@@ -1,12 +1,10 @@
 int main() {
-    list<int> l;
-    list<float> f;
-    
+    list<int> l, l1;
     l.push_back(3);
     l.push_back(5);
     print(l[0]);
     print(l[1]);
-    //list<float> l1;
-    //print(l.size - 2);
+    print(l.size);
+    print(l1.size);
     return 0;
 }

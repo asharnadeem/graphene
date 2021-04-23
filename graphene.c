@@ -42,6 +42,7 @@ void list_push_back(struct list *list, void *element)
     if (list->head == NULL)
     {
        list->head = node;
+       list->size = list->size + 1;
        return;
     }  
        
@@ -205,11 +206,10 @@ struct node *graph_get_node(struct graph *graph, int key)
 {
     if (graph->head == NULL)
     {
-        struct node *null = node_init();
-        return null;
+        return NULL;
     }
 
-    struct node *tmp = node_init();
+    struct node *tmp;
     tmp = graph->head;
 
     do
