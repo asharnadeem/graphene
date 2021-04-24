@@ -1,0 +1,24 @@
+int main()
+{
+    int a = 10;
+    int b = 5;
+
+    float c, d;
+    c = 0.5;
+    d = 0.25;
+
+    string e = "foo";
+    prints(e);
+
+    print(a + b);
+    printf(c + d); 
+    
+    print(a - b); 
+    printf(c - d); 
+    
+    print(a * b); 
+    printf(c * d); 
+    
+    print(a / b); 
+    printf(c / d);
+}

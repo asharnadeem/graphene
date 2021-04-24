@@ -1,0 +1,21 @@
+int main()
+{
+    int a = 10;
+    int b = 20;
+
+    if(a > 10)
+    {
+        print(a);
+    }
+    else
+    {
+        print(b);
+    }
+
+    b = 10;
+
+    if(a == b)
+    {
+        print(a + b);
+    }
+}

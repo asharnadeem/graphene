@@ -1,0 +1,17 @@
+int main()
+{
+    graph<int> g;
+    node<int> m;
+    node<int> n;
+
+    m.id = 1;
+    n.id = 2;
+
+    m.val = 10;
+    n.val = 20;
+
+    g.add_node(m);
+    g.add_node(n);
+
+    print(g.get_node(1).val);
+}

@@ -1,0 +1,17 @@
+int foo(int a, int b)
+{
+    int c = a + b;
+    return bar(c);
+}
+
+int bar(int c)
+{
+    int d = c + 10;
+    return d;
+}
+
+int main()
+{
+    int sum = foo(2, 4);
+    print(sum);
+}

@@ -1,0 +1,19 @@
+int main()
+{
+    int a = 5;
+    
+    int i = 0;
+    while(i < 10)
+    {
+        a = a + a;
+        i = i + 2;
+    }
+
+    i = 0;
+    for(i; i < 5; i = i + 2)
+    {
+        a = a + a;
+    }
+
+    print(a);
+}
