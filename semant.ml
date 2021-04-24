@@ -60,6 +60,7 @@ let check (globals, functions) =
       in List.fold_left add_bind_one StringMap.empty [ 
         ("print", Int);
         ("printf", Float);
+        ("prints", String)
      ]
 
   in let built_in_decls_two = 
@@ -69,11 +70,11 @@ let check (globals, functions) =
       formals = [(t, "x")];
       body = [] } map
       in List.fold_left add_bind_two built_in_decls_one [ 
-        (Int, "list_empty", List(Int););
+        (Int, "list_empty", List(Int));
         (Int, "list_pop_back", List(Int));
         (Int, "list_pop_front", List(Int));
-        (Int, "node_get_id", Node(Int););
-        (Int, "node_get_val", Node(Int););
+        (Int, "node_get_id", Node(Int));
+        (Int, "node_get_val", Node(Int))
      ]
 
   in let built_in_decls = 

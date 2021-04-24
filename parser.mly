@@ -20,8 +20,7 @@
 %nonassoc NOELSE
 %nonassoc ELSE
 %right ASSIGN LSQUARE RSQUARE
-%right DIREDGE UNDIREDGE TILDE DGT DEDGE UEDGE DEDGEP UEDGEP
-%right DOT
+%right DIREDGE UNDIREDGE TILDE DGT DEDGE UEDGE DEDGEP UEDGE
 %left OR
 %left AND
 %left EQ NEQ
@@ -29,7 +28,7 @@
 %left PLUS MINUS
 %left TIMES DIVIDE MOD
 %right NOT
-
+%right DOT
 %%
 
 program:

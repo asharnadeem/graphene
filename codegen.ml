@@ -178,7 +178,8 @@ let translate (globals, functions) =
       let builder = L.builder_at_end context (L.entry_block the_function) in
   
       let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder
-      and float_format_str = L.build_global_stringptr "%g\n" "fmt" builder in
+      and float_format_str = L.build_global_stringptr "%g\n" "fmt" builder 
+      and str_format_str = L.build_global_stringptr "%s\n" "fmt" builder in
   
       (* Construct the function's "locals": formal arguments and locally
          declared variables.  Allocate each on the stack, initialize their
@@ -230,109 +231,104 @@ let translate (globals, functions) =
   
       (* Construct code for an expression; return its value *)
       let rec expr builder ((expr_typ, e) : sexpr) = match e with
-          SIlit i     -> L.const_int i32_t i
-        | SFlit l     -> L.const_float_of_string float_t l
-        | SSlit s     -> L.const_float_of_string float_t s 
-        | SNoexpr     -> L.const_int i32_t 0
-        | SId s       -> L.build_load (lookup s) s builder
-        | SAssign (s, e) -> let e' = expr builder e in
-                            ignore(L.build_store e' (lookup s) builder); e'
-        | SAssignField (x, s, e) -> let e' = expr builder e and
-                                        x' = expr builder x in 
-           
-            (match s with
-              "id" ->         
-              let p = L.build_struct_gep x' 0 "struct.ptr" builder in
+        SIlit i     -> L.const_int i32_t i
+      | SFlit l     -> L.const_float_of_string float_t l
+      | SSlit s     -> L.build_global_stringptr (s ^ "\x00") "str" builder
+      | SNoexpr     -> L.const_int i32_t 0
+      | SId s       -> L.build_load (lookup s) s builder
+      | SAssign (s, e) -> let e' = expr builder e in
+                          ignore(L.build_store e' (lookup s) builder); e'
+      | SAssignField (x, s, e) -> let e' = expr builder e and
+                                      x' = expr builder x in       
+          (match s with
+            "id" ->         
+            let p = L.build_struct_gep x' 0 "struct.ptr" builder in
+          ignore(L.build_store e' p builder); e'
+          | "val" -> 
+          let val_ptr = L.build_struct_gep x' 1 "struct.ptr" builder in
+          let ty = ltype_of_typ expr_typ in
+          let cast = 
+            L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
+          ignore (L.build_store e' cast builder); e'
+          | "edges" -> 
+            let p = L.build_struct_gep x' 2 "struct.ptr" builder in
             ignore(L.build_store e' p builder); e'
-            | "val" -> 
-            let val_ptr = L.build_struct_gep x' 1 "struct.ptr" builder in
-            let ty = ltype_of_typ expr_typ in
-            let cast = 
-              L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
-            ignore (L.build_store e' cast builder); e'
-            | "edges" -> 
-              let p = L.build_struct_gep x' 2 "struct.ptr" builder in
-              ignore(L.build_store e' p builder); e'
-            | _ -> raise (Failure 
-                  "this should never happen, field error missed in semant"))
-        | SBinop ((A.Float,_ ) as e1, op, e2) ->
-      let e1' = expr builder e1
-      and e2' = expr builder e2 in
-      (match op with 
-        A.Add     -> L.build_fadd
-      | A.Sub     -> L.build_fsub
-      | A.Mul     -> L.build_fmul
-      | A.Div     -> L.build_fdiv 
-      | A.Mod     -> L.build_frem
-      | A.Eq      -> L.build_fcmp L.Fcmp.Oeq
-      | A.Neq     -> L.build_fcmp L.Fcmp.One
-      | A.Less    -> L.build_fcmp L.Fcmp.Olt
-      | A.Leq     -> L.build_fcmp L.Fcmp.Ole
-      | A.Greater -> L.build_fcmp L.Fcmp.Ogt
-      | A.Geq     -> L.build_fcmp L.Fcmp.Oge
-      | A.And | A.Or ->
-          raise (Failure 
-            "internal error: semant should have rejected and/or on float")
-      ) e1' e2' "tmp" builder
-        | SBinop (e1, op, e2) ->
-      let e1' = expr builder e1
-      and e2' = expr builder e2 in
-      (match op with
-        A.Add     -> L.build_add
-      | A.Sub     -> L.build_sub
-      | A.Mul     -> L.build_mul
-      | A.Div     -> L.build_sdiv
-      | A.Mod     -> L.build_srem
-      | A.And     -> L.build_and
-      | A.Or      -> L.build_or
-      | A.Eq      -> L.build_icmp L.Icmp.Eq
-      | A.Neq     -> L.build_icmp L.Icmp.Ne
-      | A.Less    -> L.build_icmp L.Icmp.Slt
-      | A.Leq     -> L.build_icmp L.Icmp.Sle
-      | A.Greater -> L.build_icmp L.Icmp.Sgt
-      | A.Geq     -> L.build_icmp L.Icmp.Sge
-      ) e1' e2' "tmp" builder
-        | SUnop(op, ((t, _) as e)) ->
-            let e' = expr builder e in
-      (match op with
-        A.Neg when t = A.Float -> L.build_fneg 
-      | A.Neg                  -> L.build_neg
-      | A.Not                  -> L.build_not) e' "tmp" builder
+          | _ -> raise (Failure 
+                "this should never happen, field error missed in semant"))
+      | SBinop ((A.Float,_ ) as e1, op, e2) ->
+        let e1' = expr builder e1
+        and e2' = expr builder e2 in
+        (match op with 
+            A.Add     -> L.build_fadd
+          | A.Sub     -> L.build_fsub
+          | A.Mul     -> L.build_fmul
+          | A.Div     -> L.build_fdiv 
+          | A.Mod     -> L.build_frem
+          | A.Eq      -> L.build_fcmp L.Fcmp.Oeq
+          | A.Neq     -> L.build_fcmp L.Fcmp.One
+          | A.Less    -> L.build_fcmp L.Fcmp.Olt
+          | A.Leq     -> L.build_fcmp L.Fcmp.Ole
+          | A.Greater -> L.build_fcmp L.Fcmp.Ogt
+          | A.Geq     -> L.build_fcmp L.Fcmp.Oge
+          | A.And | A.Or ->
+              raise (Failure 
+                "internal error: semant should have rejected and/or on float")
+          ) e1' e2' "tmp" builder
+            | SBinop (e1, op, e2) ->
+          let e1' = expr builder e1
+          and e2' = expr builder e2 in
+          (match op with
+            A.Add     -> L.build_add
+          | A.Sub     -> L.build_sub
+          | A.Mul     -> L.build_mul
+          | A.Div     -> L.build_sdiv
+          | A.Mod     -> L.build_srem
+          | A.And     -> L.build_and
+          | A.Or      -> L.build_or
+          | A.Eq      -> L.build_icmp L.Icmp.Eq
+          | A.Neq     -> L.build_icmp L.Icmp.Ne
+          | A.Less    -> L.build_icmp L.Icmp.Slt
+          | A.Leq     -> L.build_icmp L.Icmp.Sle
+          | A.Greater -> L.build_icmp L.Icmp.Sgt
+          | A.Geq     -> L.build_icmp L.Icmp.Sge
+          ) e1' e2' "tmp" builder
+            | SUnop(op, ((t, _) as e)) ->
+                let e' = expr builder e in
+          (match op with
+            A.Neg when t = A.Float -> L.build_fneg 
+          | A.Neg                  -> L.build_neg
+          | A.Not                  -> L.build_not) e' "tmp" builder
       | SCall ("print", [e]) | SCall ("printb", [e]) ->
 	  L.build_call printf_f [| int_format_str ; (expr builder e) |]
 	    "printf" builder
       | SCall ("printf", [e]) -> 
 	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
-      | SIndex ((A.List(t), _) as ls, e) -> 
-        (match t with
-          A.Int | A.Float ->
-        let ptr = (L.build_call list_index_f 
-          [|expr builder ls; expr builder e |] "list_index" builder)
-          and ty = (L.pointer_type (ltype_of_typ t)) in 
-        let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder
-        | _ -> let ptr = L.build_call list_index_f 
-          [|expr builder ls; expr builder e |] "list_index" builder
-          and ty =  (ltype_of_typ t)
-          in 
-          L.build_bitcast ptr ty "cast" builder)
-        
-      | SIndex ((A.Graph(_), _) as g, e) -> 
+      | SCall ("prints", [e]) -> 
+    L.build_call printf_f [| str_format_str ; (expr builder e) |]
+      "printf" builder
+      | SIndex ((lt, _) as s, e) -> (match lt with
+          A.List(t) -> (match t with
+            A.Int | A.Float ->
+          let ptr = (L.build_call list_index_f 
+            [|expr builder s; expr builder e |] "list_index" builder)
+            and ty = (L.pointer_type (ltype_of_typ t)) in 
+          let cast = L.build_bitcast ptr ty "cast" builder in 
+          L.build_load cast "val" builder
+          | _ -> let ptr = L.build_call list_index_f 
+            [|expr builder s; expr builder e |] "list_index" builder
+            and ty =  (ltype_of_typ t)
+            in 
+            L.build_bitcast ptr ty "cast" builder)
+        | A.Graph(_)-> 
           L.build_call graph_get_node_f 
-          [| expr builder g; expr builder e |] "graph_get_node" builder
-      | SIndex(_) -> raise (Failure 
+          [| expr builder s; expr builder e |] "graph_get_node" builder
+        | _ -> raise (Failure 
           ("this should never happen, error in semant"))
+      )
       | SCall ("list_empty", [ A.List(t), l ]) -> 
             L.build_call list_empty_f 
           [| expr builder (t, l) |] "list_empty" builder
-      (* | SCall ("list_push_back", [(A.List(t),l); e]) -> 
-        let e' = expr builder e in
-        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
-        ignore (L.build_store e' ptr builder); 
-        let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
-          L.build_call list_push_back_f 
-          [| expr builder (t, l); cast|] "list_push_back" builder *)
       | SCall ("list_push_front", [(A.List(t),l); e]) -> 
         let e' = expr builder e in
         let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
