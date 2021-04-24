@@ -13,7 +13,6 @@ let get_type(t, _) = t
          print()
          ints don't work as booleans
          equality op for non-primitives
-         strings?
          DONE???? *)
 
 (* translate : Sast.program -> Llvm.module *)
