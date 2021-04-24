@@ -6,7 +6,13 @@ module StringMap = Map.Make(String)
 
 let get_type(t, _) = t
 
-(* TODO: returning non-zero from main doesn't work?
+(* TODO: move more functions to ast types
+         FIX PRECEDENCES OF ACCESS & INDEX OPS
+         graph.add(e1,e2)
+         print()
+         ints don't work as booleans
+         equality op for non-primitives
+         strings?
          DONE???? *)
 
 (* translate : Sast.program -> Llvm.module *)
@@ -234,8 +240,7 @@ let translate (globals, functions) =
                                         x' = expr builder x in 
            
             (match s with
-              "id" -> 
-              
+              "id" ->         
               let p = L.build_struct_gep x' 0 "struct.ptr" builder in
             ignore(L.build_store e' p builder); e'
             | "val" -> 
@@ -245,7 +250,6 @@ let translate (globals, functions) =
               L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
             ignore (L.build_store e' cast builder); e'
             | "edges" -> 
-              
               let p = L.build_struct_gep x' 2 "struct.ptr" builder in
               ignore(L.build_store e' p builder); e'
             | _ -> raise (Failure 
@@ -300,19 +304,22 @@ let translate (globals, functions) =
 	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
 	    "printf" builder
       | SIndex ((A.List(t), _) as ls, e) -> 
+        (match t with
+          A.Int | A.Float ->
         let ptr = (L.build_call list_index_f 
           [|expr builder ls; expr builder e |] "list_index" builder)
           and ty = (L.pointer_type (ltype_of_typ t)) in 
-              if L.is_null ptr then (
-                raise (Failure ("error: trying to index uninitialized list")))
-                (* match t with
-                A.Int -> L.const_int i32_t 0
-              | A.Float -> L.const_float float_t 0.0 
-              | _ -> raise (Failure "NULL not implemented for this list index")) *)
-          else (let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder)
-      | SIndex ((A.Graph(_), _), _) -> 
-          raise (Failure "error: graph not yet implemented")
+        let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder
+        | _ -> let ptr = L.build_call list_index_f 
+          [|expr builder ls; expr builder e |] "list_index" builder
+          and ty =  (ltype_of_typ t)
+          in 
+          L.build_bitcast ptr ty "cast" builder)
+        
+      | SIndex ((A.Graph(_), _) as g, e) -> 
+          L.build_call graph_get_node_f 
+          [| expr builder g; expr builder e |] "graph_get_node" builder
       | SIndex(_) -> raise (Failure 
           ("this should never happen, error in semant"))
       | SCall ("list_empty", [ A.List(t), l ]) -> 
@@ -363,19 +370,12 @@ let translate (globals, functions) =
         | A.List(A.Float) -> L.const_int i32_t 2
         | _ -> L.const_int (ltype_of_typ t) 0
         in  *)
-        let e' = expr builder e in
-        let ptr = L.build_malloc (ltype_of_typ (A.Node(t))) "node" builder in
-        ignore (L.build_store e' ptr builder); 
-        let cast = L.build_bitcast ptr node_t "cast" builder in
+  
            L.build_call graph_add_node_f 
-          [| expr builder (t, l); cast|] "graph_add_node" builder
+          [| expr builder (t, l); expr builder e|] "graph_add_node" builder
       | SCall ("graph_get_node", [(A.Graph(t),l); e]) ->
-        let e' = expr builder e in
-        let ptr = L.build_malloc (ltype_of_typ (A.Node(t))) "element" builder in
-        ignore (L.build_store e' ptr builder); 
-        (* let cast = L.build_bitcast ptr node_t "cast" builder in *)
            L.build_call graph_get_node_f 
-          [| expr builder (t, l)|] "graph_get_node" builder
+          [| expr builder (t, l); expr builder e |] "graph_get_node" builder
       | SCall (f, args) ->
            let (fdef, fdecl) = StringMap.find f function_decls in
      let llargs = List.rev (List.map (expr builder) (List.rev args)) in
@@ -408,6 +408,21 @@ let translate (globals, functions) =
             | _ -> raise 
                 (Failure "this should never happen, error in semant")
               )
+        | (A.Graph(_), _) -> let mem = (match x with
+              "size" -> 2
+            | "nodes" -> 0
+            | "root" -> 1
+            | _ -> raise (Failure "internal error in accessing")) in 
+          let p = L.build_struct_gep s' mem "struct.ptr" builder 
+          in L.build_load p ("struct.val." ^ x) builder
+        | (A.Edge(_), _) -> let mem = (match x with
+              "weight" -> 0
+            | "to" -> 1
+            | "t" -> 2
+            | _ -> raise (Failure "internal error in accessing")) in
+          let p = L.build_struct_gep s' mem "struct.ptr" builder
+          in L.build_load p ("struct.val." ^ x) builder
+
         | _ -> raise (Failure "internal error")
           )
           
@@ -420,7 +435,7 @@ let translate (globals, functions) =
           [|L.const_int i32_t 0; n1p; L.const_int i32_t 0|] 
           "edge_init" builder in  
         let n1el = L.build_struct_gep n1p 2 "struct.ptr" builder and
-            n2el = L.build_struct_gep n2p 2 "struct.prt" builder in 
+            n2el = L.build_struct_gep n2p 2 "struct.ptr" builder in 
         let n1ell = L.build_load n1el "temp" builder and
             n2ell = L.build_load n2el "temp" builder in
         let cast1 = L.build_bitcast fedgep void_ptr_t 
@@ -498,14 +513,29 @@ let translate (globals, functions) =
         ignore (L.build_call list_push_back_f
             [| n2ell; cast2|] "edge_push" builder);
         expr builder n1
-      | SPushBack((A.List(t), l), e) -> let e' = expr builder e in
+      | SPushBack(s, e) -> (match (s, e) with 
+           ((A.List(t), l), _) -> (let e' = expr builder e in
         let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
         ignore (L.build_store e' ptr builder); 
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
           ignore (L.build_call list_push_back_f 
           [| expr builder (A.List(t), l); cast|] "list_push_back" builder);
-          expr builder (A.List(t),l)
-      | SPushBack(_) -> raise (Failure ("internal error on pushback"))
+          expr builder (A.List(t),l) )
+          | _ -> raise (Failure ("internal error on pushback")) )
+      | SPopBack(s) -> (match s with
+            (A.List(t), l)  -> (let ptr = (L.build_call list_pop_back_f 
+          [| expr builder (A.List(t), l) |] "list_pop_back" builder)
+          and ty = (L.pointer_type (ltype_of_typ t)) in 
+              if L.is_null ptr then (
+                raise (Failure 
+                  ("error: trying to pop from uninitialized list")))
+                (* match t with
+                A.Int -> L.const_int i32_t 0
+              | A.Float -> L.const_float float_t 0.0 
+              | _ -> raise (Failure "NULL not implemented for this list index")) *)
+          else (let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder))
+          | _ -> raise (Failure "internal error on popback"))
             
       in
       

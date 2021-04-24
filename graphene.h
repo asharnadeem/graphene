@@ -22,13 +22,13 @@ struct node
     int id;
     void *val;
     struct list *edges;
-    struct node *next;
 };
 
 struct graph
-{
-    int size;
-    struct node *head;
+{   // struct list size makes this redundant
+    // int size;
+    struct list *nodes;
+    struct node *root;
 };
 
 void printbig(int c);

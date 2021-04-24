@@ -160,7 +160,7 @@ let check (globals, functions) =
                    fulldecls);
     (* Local symbol table for function *)
     let symbols = List.fold_left (fun m (t, x) -> StringMap.add x t m) 
-      StringMap.empty (globals @ func.formals @ concat_statements [] func.body)
+      StringMap.empty (fulldecls)
     in
 
     (* Gets symbols from table *)
@@ -213,7 +213,7 @@ let check (globals, functions) =
       | Assign(x, e) as ex -> 
           let lt = type_of_identifier x
           and (rt, e') = expr e in
-          let err = "error: illegal assignment " ^ string_of_typ lt ^ " = " ^
+          let err = "error: illegal HERE assignment " ^ string_of_typ lt ^ " = " ^
                     string_of_typ rt ^ " in " ^ string_of_expr ex
           in (check_assign lt rt err, SAssign(x, (rt, e')))
       | AssignField(x, s, e) as ex -> let sx = expr x in 
@@ -221,7 +221,7 @@ let check (globals, functions) =
               (Node(t), _) -> t, List(Int)
             | _ -> raise (Failure ("error: cannot access this type")))
           and (rt, e') = expr e in
-          let err = "error: illegal assignment " ^ string_of_typ lt ^ " = "
+          let err = "error1111: illegal assignment " ^ string_of_typ lt ^ " = "
                   ^ string_of_typ rt ^ " in " ^ string_of_expr ex
           in (match s with 
               "val" -> 
@@ -454,11 +454,21 @@ let check (globals, functions) =
             (Node(tn), _) -> (match s with 
                 "val" -> (tn, SAccess(sx, s))
               | "id"  -> (Int, SAccess(sx, s))
-              | "edges" -> (List(Edge(Int)), SAccess(sx, s))
+              | "edges" -> (List(Edge(tn)), SAccess(sx, s))
               | _ -> raise (Failure ("error: invalid node field " ^ s)))
           | (List(_), _) -> (match s with 
                 "size" -> (Int, SAccess(sx, s))
-              | _ -> raise (Failure ("error: invalid list " ^ s)))
+              | _ -> raise (Failure ("error: invalid list field " ^ s)))
+          | (Graph(tg), _) -> (match s with 
+                "size" -> (Int, SAccess(sx, s))
+              | "nodes" -> (List(Node(tg)), SAccess(sx, s))
+              | "root" -> (Node(tg), SAccess(sx, s))
+              | _ -> raise (Failure ("error: invalid graph field " ^ s)))
+          | (Edge(te), _) -> (match s with 
+                "weight" -> (te, SAccess(sx, s))
+              | "to" -> (Node(te), SAccess(sx, s))
+              | "t" -> (Int, SAccess(sx, s))
+              | _ -> raise (Failure ("error: invalid edge field " ^ s)))
           | _ -> raise 
               (Failure ("error: this type does not have this field: " ^ s)))
       | Noexpr -> (Void, SNoexpr)
@@ -488,11 +498,11 @@ let check (globals, functions) =
       | Index(l, i) -> let l' = expr l and 
                                i' = expr i in (match (l', i') with
             ((List(t),_), (Int, _)) -> (t, SIndex(l', i'))
-          | ((Graph(t),_), (Int, _)) -> (t, SIndex(l', i'))
-          | (_, (Int,_)) -> raise (Failure ("error: cannot index non-list " ^ 
-                                    string_of_expr l))
+          | ((Graph(t),_), (Int, _)) -> (Node(t), SIndex(l', i'))
+          | (_, (Int,_)) -> raise (Failure 
+          ("error: cannot index non-list/graph " ^ string_of_expr l))
           | ((List(_),_), _) -> raise (Failure 
-          ("error: cannot index list with non-int " ^ string_of_expr i))
+          ("error: cannot index with non-int " ^ string_of_expr i))
           | _ -> raise (Failure ("error: invalid index of " 
           ^ string_of_expr l ^ " with " ^ string_of_expr i)))    
       | PushBack(l, e) -> let l' = expr l 
@@ -501,8 +511,13 @@ let check (globals, functions) =
           | ((List(tl),_), _) -> raise (Failure ("error: cannot push " 
           ^ string_of_expr e ^ " to list of type " ^ string_of_typ tl))
           | _ -> raise (Failure ("error: push_back on non-list " 
-          ^ string_of_expr e))
-                          )
+          ^ string_of_expr e)))
+      |  PopBack(l) -> let l' = expr l in (match l' with
+            (List(tl),_) -> (tl, SPopBack(l'))
+          | _ -> raise (Failure ("error: pop_back on non-list " 
+          ^ string_of_expr l)))
+      
+                          
 
     in
 

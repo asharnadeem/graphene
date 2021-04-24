@@ -73,6 +73,7 @@ void *list_pop_back(struct list *list)
         void *data = list->head->element;
         free(list->head);
         list->head = NULL;
+        list->size = list->size - 1;
         return data;
     }
     else
@@ -85,6 +86,7 @@ void *list_pop_back(struct list *list)
         void *data = t->next->element;
         free(t->next);
         t->next=NULL; 
+        list->size = list->size - 1;
         return data;
     }    
 }
@@ -99,6 +101,7 @@ void *list_pop_front(struct list *list)
         list->size = list->size - 1;
         return data;
     }
+    return NULL;
 }
 
 int list_size(struct list *list)
@@ -125,29 +128,28 @@ struct node *node_init()
     struct node *node = malloc(sizeof(struct node));
     node->val = malloc(sizeof(void *));
     node->edges = malloc(sizeof(struct list *));
-    node->next = NULL;
     return node;
 }
 
-void node_set_id(struct node *node, int id)
-{
-    node->id = id;
-}
+// void node_set_id(struct node *node, int id)
+// {
+//     node->id = id;
+// }
 
-void node_set_val(struct node *node, void *val)
-{
-    node->val = val;
-}
+// void node_set_val(struct node *node, void *val)
+// {
+//     node->val = val;
+// }
 
-int node_get_id(struct node *node)
-{
-    return node->id;
-}
+// int node_get_id(struct node *node)
+// {
+//     return node->id;
+// }
 
-void node_get_val(struct node *node)
-{
-    return *node->val;
-}
+// void node_get_val(struct node *node)
+// {
+//     return *node->val;
+// }
 
 /* ---------- End Node Functions ---------- */
 
@@ -171,55 +173,88 @@ struct edge *edge_init(int w, struct node *n, int tr)
 struct graph *graph_init()
 {
     struct graph *graph = malloc(sizeof(struct graph));
-    graph->size = 0;
-    graph->head = NULL;
+    graph->nodes = list_init();
+    graph->root = NULL;
     return graph;
 }
 
-int graph_size(struct graph *graph)
-{
-    return graph->size;
-}
 
 void graph_add_node(struct graph *graph, struct node *node)
 {
-    if (graph->head == NULL)
+    // printf("addnode\n");
+    // printf("adding: %d, %d", node->id, *((int  *)node->val));
+    if (graph->root == NULL)
     {
-        graph->size = 1;
-        graph->head = node;
-        return ;
+        graph->root = node;
     }
 
-    struct node *tmp = node_init();
-    tmp = graph->head;
-
-    while (tmp->next != NULL)
+    struct list_element *tmp;
+    tmp = graph->nodes->head;
+    if(tmp == NULL) 
     {
-        tmp = tmp->next;
+      // printf("HEAD NULL\n");
+      struct list_element* newel = (struct list_element*) malloc(sizeof(struct list_element));
+      newel->element = node;
+      newel->next = NULL;
+      graph->nodes->head = newel;
     }
+    else {
+      while (tmp->next != NULL)
+      {   
+          // printf("on: %d, adding: %d\n", node->id,  ((struct node *)tmp->element)->id);
+          if(node->id == ((struct node *)tmp->element)->id) 
+          {
+            
+            // printf("graph already has node of id = %d\n", node->id);
+          }
+          tmp = tmp->next;
+      }
+      // printf("on: %d, adding: %d\n", node->id, ((struct node *)tmp->element)->id );
+      if(node->id == ((struct node *)tmp->element)->id) 
+      {
+        // printf("graph already has node of id = %d\n", node->id);
+      }
 
-    tmp->next = node;
-    graph->size = graph->size + 1;
+      struct list_element* newel = (struct list_element*) malloc(sizeof(struct list_element));
+      newel->element = (void *) node;
+      newel->next = NULL;
+      tmp->next = newel;
+    
+    // printf("added: %d, %d\n", ((struct node *) newel->element)-> id, *(int *)(((struct node *) newel->element)->val));
+    }
+    graph->nodes->size = graph->nodes->size + 1;
 }
 
-struct node *graph_get_node(struct graph *graph, int key)
+struct node *graph_get_node(struct graph *graph, int id)
 {
-    if (graph->head == NULL)
-    {
-        return NULL;
-    }
+    // if (graph->head == NULL)
+    // {
+    //     return NULL;
+    // }
+    //printf("searching for node with key: %d\n", id);
 
-    struct node *tmp;
-    tmp = graph->head;
+    struct list_element *tmp;
+    tmp = graph->nodes->head;
+    // if(tmp == NULL) {
+    //   return NULL;
+    // }
+    // printf("1\n");
 
-    do
+    while (tmp != NULL) 
     {
-        if(tmp->id == key){
-            return tmp;
+        //printf("looping, cur id = %d\n", ((struct node *) tmp->element)->id);
+        //printf("2\n");
+        if(((struct node *) tmp->element)->id == id)
+        {
+            //printf("NODE FOUND\n");
+            return (struct node *) tmp->element;
         }
         tmp = tmp->next;
     }
-    while (tmp->next != NULL);
+    //printf("node not found\n");
+    //printf("3\n");
+    return NULL;
+    
 }
 
 /* ---------- End Graph Functions ---------- */
@@ -248,8 +283,20 @@ void printbig(int c)
     } while (index & 0x7);
 }
 
-// int main()
-// {
+//  int main()
+//  {
+//     struct graph *g = graph_init();
+//     struct node *n = node_init();
+//     n->id = 10;
+//     struct node *m = node_init();
+//     m->id = 0;
+//     graph_add_node(g, n);
+//     graph_add_node(g, m);
+//     struct list *l = g->nodes;
+//     printf("%d\n", ((struct node *)(list_index(l, 1)))->id);
+
+
+//  }
 //     int a = 1;
 //     int b = 2;
 

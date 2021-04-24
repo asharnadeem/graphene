@@ -1,11 +1,12 @@
 int main()
 {
     graph<int> g;
-    node<int> n;
+    node<int> n, j;
     n.id = 10;
+    j.id = 1;
     print(n.id);
     g.add_node(n);
-
-    node<int> tmp = g.get_node(10);
-    print(tmp.id);
+    g.add_node(j);
+    print(g.get_node(10).id);
+    print(g[1].id);
 }

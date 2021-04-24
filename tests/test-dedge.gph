@@ -2,9 +2,9 @@ int main() {
   node<float> a;
   node<float> b;
   b -> a;
-  list<edge <int> > t;
+  list<edge<float>> t;
   t = a.edges;
-  list<edge <int> > s = a.edges;
+  list<edge<float>> s = a.edges;
   a.val = 0.0;
   printf(a.val);
   return 0;

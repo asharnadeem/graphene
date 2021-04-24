@@ -7,7 +7,7 @@
 %token TILDE DIREDGE UNDIREDGE DGT DEDGE UEDGE DEDGEP UEDGEP
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID 
-%token PUSHBACK
+%token PUSHBACK POPBACK
 %token <int> LITERAL
 %token <string> FLIT
 %token <string> SLIT
@@ -44,7 +44,7 @@ fdecl:
   typ ID LPAREN formals_opt RPAREN LBRACE stmt_list RBRACE
     { {typ = $1; 
       fname = $2;
-      formals = $4;
+      formals = List.rev $4;
       body = List.rev $7;
     } }
 
@@ -145,6 +145,7 @@ expr:
   Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
   | expr DOT ID LPAREN args_opt RPAREN { Call( $3, $1 :: $5 ) }
   | expr DOT PUSHBACK LPAREN expr RPAREN { PushBack($1, $5) }
+  | expr DOT POPBACK LPAREN RPAREN { PopBack($1) }
 
 literal:
     ID { Id($1) }

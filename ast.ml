@@ -41,6 +41,7 @@ type expr =
   | Access of expr * string
   | Index of expr * expr
   | PushBack of expr * expr
+  | PopBack of expr 
   | Noexpr
   | UEdge of expr * expr
   | UEdgeC of expr * expr * expr
@@ -135,6 +136,7 @@ let rec string_of_expr = function
   | Index(l, i) -> string_of_expr l ^ "[" ^ string_of_expr i ^ "]"
   | PushBack(l, e) -> string_of_expr l ^ ".push_back(" 
         ^ string_of_expr e ^ ")"
+  | PopBack(l) -> string_of_expr l ^ ".pop_back()"
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"
