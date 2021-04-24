@@ -8,7 +8,6 @@ let get_type(t, _) = t
 
 (* TODO: move more functions to ast types
          enforce uniqueness of ids in graphs in C
-         FIX PRECEDENCES OF ACCESS & INDEX OPS
          graph.add(e1,e2)
          print()
          ints don't work as booleans
