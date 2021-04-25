@@ -7,10 +7,6 @@ module StringMap = Map.Make(String)
 let get_type(t, _) = t
 
 (* TODO: enforce uniqueness of ids in graphs in C
-         graph.add(e1,e2)
-         print()
-         ints don't work as booleans
-         equality op for non-primitives
          DONE???? *)
 
 (* translate : Sast.program -> Llvm.module *)
@@ -538,7 +534,15 @@ let translate (globals, functions) =
                               | _ -> L.build_ret (expr builder e) builder );
                        builder
         | SIf (predicate, then_stmt, else_stmt) ->
-           let bool_val = expr builder predicate in
+           let bool_val = let predval = expr builder predicate in 
+            (match predicate with 
+              (A.Int, SBinop(_)) -> predval
+            | (A.Int, _) -> 
+           L.build_icmp L.Icmp.Sgt predval (L.const_int i32_t 0) "tmp" builder
+            | (A.Float, _) -> 
+          L.build_fcmp L.Fcmp.Ogt predval (L.const_float float_t 0.0) 
+              "tmp" builder
+            | _ -> raise (Failure "internal error on if-pred")) in
            let merge_bb = L.append_block context "merge" the_function in
            let build_br_merge = L.build_br merge_bb in (* partial function *)
            
@@ -562,7 +566,16 @@ let translate (globals, functions) =
         (L.build_br pred_bb);
         
         let pred_builder = L.builder_at_end context pred_bb in
-        let bool_val = expr pred_builder predicate in
+        let bool_val = let predval = expr pred_builder predicate in 
+            (match predicate with 
+              (A.Int, SBinop(_)) -> predval
+            | (A.Int, _) -> 
+           L.build_icmp L.Icmp.Sgt predval (L.const_int i32_t 0) 
+            "tmp" pred_builder
+            | (A.Float, _) -> 
+          L.build_fcmp L.Fcmp.Ogt predval (L.const_float float_t 0.0) 
+              "tmp" pred_builder
+            | _ -> raise (Failure "internal error on if-pred")) in
   
       let merge_bb = L.append_block context "merge" the_function in
       ignore(L.build_cond_br bool_val body_bb merge_bb pred_builder);
