@@ -27,6 +27,8 @@ and sx =
   | SPeekFront of sexpr
   | SAddNode of sexpr * sexpr
   | SGAdd of sexpr * sexpr * sexpr
+  | SContains of sexpr * sexpr
+  | SContainsId of sexpr * sexpr
 
 type sstmt = 
     SExpr of sexpr
@@ -85,6 +87,10 @@ let rec string_of_sexpr (t, e) =
   | SAddNode(g, e) -> string_of_sexpr g ^ ".add_node(" ^ string_of_sexpr e ^")"
   | SGAdd(g, id, v) -> string_of_sexpr g ^ ".add(" 
     ^ string_of_sexpr id ^ ", " ^ string_of_sexpr v ^ ")"
+  | SContains(g, n) -> 
+    string_of_sexpr g ^ ".contains(" ^ string_of_sexpr n ^ ")"
+  | SContainsId(g, i) -> 
+    string_of_sexpr g ^ ".contains_id(" ^ string_of_sexpr i ^ ")"
 
   ) ^ ")"
   

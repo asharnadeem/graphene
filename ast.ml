@@ -54,6 +54,8 @@ type expr =
   | DEdge of expr * expr
   | DEdgeC of expr * expr * expr
   | GAdd of expr * expr * expr
+  | Contains of expr * expr
+  | ContainsId of expr * expr
 
 type bind = typ * string
 
@@ -146,6 +148,9 @@ let rec string_of_expr = function
   | AddNode(g, e) -> string_of_expr g ^ ".add_node(" ^ string_of_expr e ^")"
   | GAdd(g, id, v) -> string_of_expr g ^ ".add(" 
     ^ string_of_expr id ^ ", " ^  string_of_expr v ^ ")"
+  | Contains(g, n) -> string_of_expr g ^ ".contains(" ^ string_of_expr n ^ ")"
+  | ContainsId(g, i) -> 
+    string_of_expr g ^ ".contains_id(" ^ string_of_expr i ^ ")"
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"

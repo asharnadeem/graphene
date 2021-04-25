@@ -55,7 +55,10 @@ int graph_size(struct graph *graph);
 void graph_add_node(struct graph *graph, struct node *node);
 struct node *graph_add(struct graph *graph, int id, void *val);
 struct node *graph_get_node(struct graph *graph, int key);
+int graph_contains_node(struct graph *graph, struct node *node);
+int graph_contains_id(struct graph *graph, int id);
 
+int string_cmp(void *v1, void*v2);
 static const char font[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x1c, 0x3e, 0x61, 0x41, 0x43, 0x3e, 0x1c, 0x00,

@@ -301,6 +301,20 @@ let check (globals, functions) =
           raise (Failure "error: invalid parameters to add")
         | (_, _, _) -> 
           raise (Failure "error: cannot add to non-graph"))
+      | Contains(g, n) -> let g' = expr g and n' = expr n 
+      in (match (g', n' ) with
+          ((Graph(tg),_), (Node(tn), _)) ->
+            if tg = tn then (Int, SContains(g', n'))
+            else raise (Failure "error: type mismatch on contains")
+        | ((Graph(_),_), _) -> 
+            raise (Failure "error: contains arg must be node")
+        | (_, _) -> raise (Failure "error: contains used on non-graph"))
+      | ContainsId(g, id) -> let g' = expr g and id' = expr id 
+      in (match (g', id' ) with
+          ((Graph(_),_), (Int, _)) -> (Int, SContainsId(g', id'))
+        | ((Graph(_),_), _) -> 
+            raise (Failure "error: contains_id arg must be int")
+        | (_, _) -> raise (Failure "error: contains_id used on non-graph"))
                         
     in
 

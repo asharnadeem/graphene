@@ -279,12 +279,42 @@ struct node *graph_get_node(struct graph *graph, int id)
     return NULL;
     
 }
+int graph_contains_node(struct graph *graph, struct node *node) {
+  struct list_element *tmp = graph->nodes->head;
+  while (tmp != NULL) {
+    if(tmp->element == node) {
+      return 1;
+    }
+    tmp = tmp->next;
+  }
+  return 0;
+}
+
+int graph_contains_id(struct graph *graph, int id) {
+  return graph_get_node(graph, id) != NULL;
+}
 
 /* ---------- End Graph Functions ---------- */
 
 
 /* ---------- Misc. Functions ---------- */
 
+int string_cmp(void *v1, void *v2) {
+    char *s1 = (char *) v1;
+    char *s2 = (char *) v2;
+    while(*s1 && *s2) {
+        if(*s1++ == *s2++) { }
+        else {
+            return 0;
+        }
+    }
+    if(*s1 == *s2) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
 void printbig(int c)
 {
     int index = 0;

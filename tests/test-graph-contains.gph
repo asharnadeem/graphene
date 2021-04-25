@@ -1,0 +1,11 @@
+int main() {
+    graph<float> g;
+    node<float> n;
+    n.id = 6;
+    n.val = 6.6;
+    print(g.contains(n));
+    g.add_node(n);
+    print(g.contains(n));
+    print(g.contains_id(0));
+    print(g.contains_id(6));
+}

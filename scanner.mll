@@ -73,6 +73,7 @@ rule token = parse
   | "peek_front"          { PEEKFRONT }
   | "add_all"             { ADDALL }
   | "contains"            { CONTAINS } 
+  | "contains_id"         { CONTAINSID }
   | "add_node"            { ADDNODE }
   | "add"                 { ADD }
  

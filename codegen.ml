@@ -143,6 +143,16 @@ let translate (globals, functions) =
       L.function_type node_t [| graph_t ; i32_t |] in
   let graph_get_node_f : L.llvalue =
       L.declare_function "graph_get_node" graph_get_node_t the_module in
+  
+  let graph_contains_node_t : L.lltype = 
+      L.function_type i32_t [| graph_t; node_t |] in
+  let graph_contains_node_f : L.llvalue =
+      L.declare_function "graph_contains_node" graph_contains_node_t the_module
+  in 
+  let graph_contains_id_t : L.lltype = 
+      L.function_type i32_t [| graph_t; i32_t |] in
+  let graph_contains_id_f : L.llvalue =
+      L.declare_function "graph_contains_id" graph_contains_id_t the_module in
 
 
   (* Define each function (arguments and return type) so we can 
@@ -540,6 +550,10 @@ let translate (globals, functions) =
             L.build_call graph_add_f
             [| expr builder g; expr builder id; cast |] "graph_add" builder
         | _ -> raise (Failure "internal error on add"))
+      | SContains(g, n) -> L.build_call graph_contains_node_f  
+          [|expr builder g; expr builder n|] "graph_contains_node" builder
+      | SContainsId(g, id) -> L.build_call graph_contains_id_f  
+          [|expr builder g; expr builder id|] "graph_contains_id" builder
       in
       
     (* LLVM insists each basic block end with exactly one "terminator" 
