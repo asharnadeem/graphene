@@ -228,7 +228,7 @@ let translate (globals, functions) =
     
   
       (* Construct code for an expression; return its value *)
-      let rec expr builder ((expr_typ, e) : sexpr) = match e with
+      let rec expr builder ((_, e) : sexpr) = match e with
         SIlit i     -> L.const_int i32_t i
       | SFlit l     -> L.const_float_of_string float_t l
       | SSlit s     -> L.build_global_stringptr (s ^ "\x00") "str" builder
@@ -237,22 +237,27 @@ let translate (globals, functions) =
       | SAssign (s, e) -> let e' = expr builder e in
                           ignore(L.build_store e' (lookup s) builder); e'
       | SAssignField (x, s, e) -> let e' = expr builder e and
-                                      x' = expr builder x in       
+                                      x' = expr builder x in  
+        (match x with 
+          (A.Node(t), _)  ->   
           (match s with
             "id" ->         
             let p = L.build_struct_gep x' 0 "struct.ptr" builder in
           ignore(L.build_store e' p builder); e'
           | "val" -> 
-          let val_ptr = L.build_struct_gep x' 1 "struct.ptr" builder in
-          let ty = ltype_of_typ expr_typ in
+          let str_ptr = L.build_struct_gep x' 1 "struct.ptr" builder in
+          let void_ptr = L.build_load str_ptr "void.ptr" builder in
           let cast = 
-            L.build_bitcast val_ptr (L.pointer_type ty) "val" builder in 
+            L.build_bitcast void_ptr (L.pointer_type (ltype_of_typ t))
+            "val" builder in 
           ignore (L.build_store e' cast builder); e'
           | "edges" -> 
-            let p = L.build_struct_gep x' 2 "struct.ptr" builder in
-            ignore(L.build_store e' p builder); e'
+            let str_ptr = L.build_struct_gep x' 2 "struct.ptr" builder in
+            let edge_ptr = L.build_load str_ptr "edge.ptr" builder in
+            ignore(L.build_store e' edge_ptr builder); e'
           | _ -> raise (Failure 
                 "this should never happen, field error missed in semant"))
+        | _ -> raise (Failure "internal error on assignfield"))
       | SBinop ((A.Float,_ ) as e1, op, e2) ->
         let e1' = expr builder e1
         and e2' = expr builder e2 in
@@ -386,14 +391,16 @@ let translate (globals, functions) =
               (let p = L.build_struct_gep s' 0 "struct.ptr" builder in
             L.build_load p ("struct.val." ^ x) builder)
             | "val" -> 
-            (let void_ptr = L.build_struct_gep s' 1 "struct.ptr" builder in
+            (let str_ptr = L.build_struct_gep s' 1 "struct.ptr" builder in
+            let void_ptr = L.build_load str_ptr "void.ptr" builder in
             let ty = ltype_of_typ t in
             let cast = 
               L.build_bitcast void_ptr (L.pointer_type ty) "cast" builder in
             L.build_load cast ("struct.val." ^ x ^ ".value") builder)
             | "edges" -> 
-              (let p = L.build_struct_gep s' 2 "struct.ptr" builder in
-              L.build_load p ("struct.val." ^ x ) builder) 
+              (let str_ptr = L.build_struct_gep s' 2 "struct.ptr" builder in
+              (* let edge_ptr = L.build_load str_ptr "edge.ptr" builder in  *)
+              L.build_load str_ptr ("struct.val." ^ x ) builder) 
             | _ -> raise (Failure 
                 ("this should never happen, error in semant")))
         | (A.List(_), _) -> 
@@ -410,13 +417,25 @@ let translate (globals, functions) =
             | _ -> raise (Failure "internal error in accessing")) in 
           let p = L.build_struct_gep s' mem "struct.ptr" builder 
           in L.build_load p ("struct.val." ^ x) builder
-        | (A.Edge(_), _) -> let mem = (match x with
+        | (A.Edge(_), _) -> (match x with 
+              "weight" -> 
+                let str_ptr = L.build_struct_gep s' 0 "struct.ptr" builder
+                in L.build_load str_ptr ("struct.val." ^ x) builder
+            | "to" -> 
+                let str_ptr = L.build_struct_gep s' 1 "struct.ptr" builder
+                in 
+                  L.build_load str_ptr ("struct.val." ^ x) builder
+            | "t" -> 
+                let str_ptr = L.build_struct_gep s' 2 "struct.ptr" builder
+                in L.build_load str_ptr ("struct.val." ^ x) builder
+            | _ -> raise (Failure "internal error in accessing"))
+        (* let mem = (match x with
               "weight" -> 0
             | "to" -> 1
             | "t" -> 2
             | _ -> raise (Failure "internal error in accessing")) in
           let p = L.build_struct_gep s' mem "struct.ptr" builder
-          in L.build_load p ("struct.val." ^ x) builder
+          in L.build_load p ("struct.val." ^ x) builder *)
 
         | _ -> raise (Failure "internal error")
           )
@@ -596,10 +615,14 @@ let translate (globals, functions) =
         | SDeclare(A.Graph(_), lg, _) -> List.iter (fun g -> 
             let ptr = L.build_call graph_init_f [| |] "init_graph" builder in
             ignore (L.build_store ptr (lookup g) builder)) lg ; builder
-        | SDeclare(A.Node(_), ln, _) -> List.iter (fun n -> 
-          (* INIT EDGELIST HERE *)
+        | SDeclare(A.Node(t), ln, _) -> List.iter (fun n -> 
             let ptr = L.build_call node_init_f [| |] "init_node" builder in
-            ignore (L.build_store ptr (lookup n) builder)) ln ; builder 
+            ignore (L.build_store ptr (lookup n) builder)  ;
+            let val_ptr = 
+              L.build_struct_gep ptr 1 "struct.ptr" builder in
+            let mptr = L.build_malloc (ltype_of_typ t) "nodeval" builder in
+             let cast = L.build_bitcast mptr void_ptr_t "cast" builder in 
+            ignore (L.build_store cast val_ptr builder)) ln ; builder 
         | SDeclare(_, _, a) -> ignore(expr builder a); builder
         | SContinue | SBreak -> raise (Failure ("error: continue/break"))
         

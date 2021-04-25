@@ -126,8 +126,8 @@ int list_empty(struct list *list)
 struct node *node_init()
 {
     struct node *node = malloc(sizeof(struct node));
-    node->val = malloc(sizeof(void *));
-    node->edges = malloc(sizeof(struct list *));
+    //node->val = malloc(sizeof(void *));
+    node->edges = malloc(sizeof(struct list));
     return node;
 }
 
@@ -181,8 +181,8 @@ struct graph *graph_init()
 
 void graph_add_node(struct graph *graph, struct node *node)
 {
-    // printf("addnode\n");
-    // printf("adding: %d, %d", node->id, *((int  *)node->val));
+    //  printf("addnode\n");
+    //  printf("adding: %d, %d", node->id, *(int  *)(node->val));
     if (graph->root == NULL)
     {
         graph->root = node;
@@ -288,8 +288,10 @@ void printbig(int c)
 //     struct graph *g = graph_init();
 //     struct node *n = node_init();
 //     n->id = 10;
+//     n->val = malloc(sizeof(int));
 //     struct node *m = node_init();
 //     m->id = 0;
+//     m->val = malloc(sizeof(int));
 //     graph_add_node(g, n);
 //     graph_add_node(g, m);
 //     struct list *l = g->nodes;
