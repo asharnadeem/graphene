@@ -165,6 +165,9 @@ struct edge *edge_init(int w, struct node *n, int tr)
     return edge;
 }
 
+void edge_check(struct node *n1, struct node *n2) {
+
+}
 /* ---------- End Edge Functions ---------- */
 
 
@@ -223,6 +226,15 @@ void graph_add_node(struct graph *graph, struct node *node)
     // printf("added: %d, %d\n", ((struct node *) newel->element)-> id, *(int *)(((struct node *) newel->element)->val));
     }
     graph->nodes->size = graph->nodes->size + 1;
+}
+
+struct node *graph_add(struct graph *graph, int id, void *val) 
+{
+  struct node *node = node_init();
+  node->id = id;
+  node->val = val;
+  graph_add_node(graph, node);
+  return node;
 }
 
 struct node *graph_get_node(struct graph *graph, int id)

@@ -51,6 +51,7 @@ type expr =
   | UEdgeC of expr * expr * expr
   | DEdge of expr * expr
   | DEdgeC of expr * expr * expr
+  | GAdd of expr * expr * expr
 
 type bind = typ * string
 
@@ -139,6 +140,8 @@ let rec string_of_expr = function
   | PopBack(l) -> string_of_expr l ^ ".pop_back()"
   | PopFront(l) -> string_of_expr l ^ ".pop_front()"
   | AddNode(g, e) -> string_of_expr g ^ ".add_node(" ^ string_of_expr e ^")"
+  | GAdd(g, id, v) -> string_of_expr g ^ ".add(" 
+    ^ string_of_expr id ^ ", " ^  string_of_expr v ^ ")"
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"

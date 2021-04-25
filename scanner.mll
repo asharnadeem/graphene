@@ -70,6 +70,7 @@ rule token = parse
   | "pop_back"            { POPBACK }
   | "pop_front"           { POPFRONT }
   | "add_node"            { ADDNODE }
+  | "add"                 { ADD }
 
 (* literals *)
   | '\"' ([^'\"']* as str) '\"' { SLIT(str) }

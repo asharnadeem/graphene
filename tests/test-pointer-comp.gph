@@ -1,0 +1,15 @@
+int main() {
+    node<int> a, b;
+    cmp(a, b);
+    a = b;
+    cmp(a, b);
+}
+
+void cmp(node<int> a, node<int> b) {
+    if(a == b) {
+        print("yes");
+    }
+    else {
+        print("no");
+    }
+}

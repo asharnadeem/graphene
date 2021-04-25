@@ -51,6 +51,7 @@ struct edge *edge_init(int w, struct node *n, int tr);
 struct graph *graph_init();
 int graph_size(struct graph *graph);
 void graph_add_node(struct graph *graph, struct node *node);
+struct node *graph_add(struct graph *graph, int id, void *val);
 struct node *graph_get_node(struct graph *graph, int key);
 
 static const char font[] = {

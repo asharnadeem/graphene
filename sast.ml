@@ -24,6 +24,7 @@ and sx =
   | SPopBack of sexpr 
   | SPopFront of sexpr
   | SAddNode of sexpr * sexpr
+  | SGAdd of sexpr * sexpr * sexpr
 
 type sstmt = 
     SExpr of sexpr
@@ -78,7 +79,9 @@ let rec string_of_sexpr (t, e) =
   | SPopBack(l) -> string_of_sexpr l ^ ".pop_back()"
   | SPopFront(l) -> string_of_sexpr l ^ ".pop_front()"
   | SAddNode(g, e) -> string_of_sexpr g ^ ".add_node(" ^ string_of_sexpr e ^")"
-  
+  | SGAdd(g, id, v) -> string_of_sexpr g ^ ".add(" 
+    ^ string_of_sexpr id ^ ", " ^ string_of_sexpr v ^ ")"
+
   ) ^ ")"
   
       

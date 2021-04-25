@@ -8,7 +8,7 @@
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE PRINT
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID 
 %token PUSHBACK PUSHFRONT POPBACK POPFRONT
-%token ADDNODE
+%token ADDNODE ADD
 %token <int> LITERAL
 %token <string> FLIT
 %token <string> SLIT
@@ -20,8 +20,8 @@
 
 %nonassoc NOELSE
 %nonassoc ELSE
-%right ASSIGN LSQUARE RSQUARE
 %right DIREDGE UNDIREDGE TILDE DGT DEDGE UEDGE DEDGEP UEDGE
+%right ASSIGN LSQUARE RSQUARE
 %left OR
 %left AND
 %left EQ NEQ
@@ -148,6 +148,7 @@ expr:
   | expr DOT POPBACK LPAREN RPAREN { PopBack($1) }
   | expr DOT POPFRONT LPAREN RPAREN { PopFront($1) }
   | expr DOT ADDNODE LPAREN expr RPAREN { AddNode($1, $5) }
+  | expr DOT ADD LPAREN expr COMMA expr RPAREN { GAdd($1, $5, $7) }
 
 literal:
     ID { Id($1) }

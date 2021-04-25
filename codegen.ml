@@ -127,10 +127,16 @@ let translate (globals, functions) =
   let graph_add_node_f : L.llvalue =
       L.declare_function "graph_add_node" graph_add_node_t the_module in
 
+  let graph_add_t : L.lltype = 
+      L.function_type node_t [| graph_t; i32_t; void_ptr_t |] in
+  let graph_add_f : L.llvalue = 
+      L.declare_function "graph_add" graph_add_t the_module in
+
   let graph_get_node_t : L.lltype = 
       L.function_type node_t [| graph_t ; i32_t |] in
   let graph_get_node_f : L.llvalue =
       L.declare_function "graph_get_node" graph_get_node_t the_module in
+
 
   (* Define each function (arguments and return type) so we can 
      call it even before we've created its body *)
@@ -244,7 +250,7 @@ let translate (globals, functions) =
               raise (Failure 
                 "internal error: semant should have rejected and/or on float")
           ) e1' e2' "tmp" builder
-            | SBinop (e1, op, e2) ->
+      | SBinop ((A.Int,_ ) as e1, op, e2) ->
           let e1' = expr builder e1
           and e2' = expr builder e2 in
           (match op with
@@ -268,6 +274,13 @@ let translate (globals, functions) =
             A.Neg when t = A.Float -> L.build_fneg 
           | A.Neg                  -> L.build_neg
           | A.Not                  -> L.build_not) e' "tmp" builder
+      | SBinop ((ty,_ ) as e1, op, e2) ->
+          if op = A.Eq then
+            let e1' = expr builder e1
+            and e2' = expr builder e2 in
+            L.build_icmp L.Icmp.Eq e1' e2' "tmp" builder
+          else raise (Failure ("invalid operator " ^ A.string_of_binop op ^
+            " on " ^ A.string_of_typ ty))
       | SIndex ((lt, _) as s, e) -> (match lt with
           A.List(t) -> (match t with
             A.Int | A.Float ->
@@ -316,7 +329,7 @@ let translate (globals, functions) =
           | _ -> raise (Failure "internal error on node") )
           in let format_str = 
             L.build_global_stringptr 
-            ("id: %d, val: %" ^ str_mod ^ ", edges: %d") "fmt" builder in
+            ("id: %d, val: %" ^ str_mod ^ ", edges: %d\n") "fmt" builder in
             L.build_call printf_f 
             [| format_str; id; nval; edges|] 
             "printf" builder
@@ -492,6 +505,14 @@ let translate (globals, functions) =
           | _ -> raise (Failure "internal error on pop_front"))
       | SAddNode(g, e) ->  L.build_call graph_add_node_f 
           [| expr builder g; expr builder e|] "graph_add_node" builder
+      | SGAdd(g, id, v) -> (match g with
+          (A.Graph(t), _) -> 
+            let nptr = L.build_malloc (ltype_of_typ t) "nodeval" builder in
+            ignore(L.build_store (expr builder v) nptr builder);
+            let cast = L.build_bitcast nptr void_ptr_t "cast" builder in
+            L.build_call graph_add_f
+            [| expr builder g; expr builder id; cast |] "graph_add" builder
+        | _ -> raise (Failure "internal error on add"))
       in
       
     (* LLVM insists each basic block end with exactly one "terminator" 

@@ -145,7 +145,9 @@ let check (globals, functions) =
           let ty = match o with
             Add | Sub | Mul | Div | Mod when same && t1 = Int -> Int
           | Add | Sub | Mul | Div | Mod when same && t1 = Float -> Float
-          | Eq                  when same && t1 = Int -> Int
+          | Eq  when same -> (match t1 with 
+              Int | Float | Node(_) | Edge(_) | List(_) | Graph (_) -> Int
+            | _ -> raise (Failure "error: illegal comparison"))
           | Less | Leq | Greater | Geq
                      when same && (t1 = Int || t1 = Float) -> Int
           | And | Or when same && t1 = Int -> Int
@@ -278,13 +280,20 @@ let check (globals, functions) =
             else raise (Failure ("error: graph and node types do not match,"
             ^ string_of_typ tg ^ " vs " ^ string_of_typ tn))
         | ((Graph(_), _), _) -> 
-            raise (Failure "error: cannot add non-node to graph")
-        | (_, (Node(_), _)) ->
-            raise (Failure "error: cannot add to non-graph")
-        | (_, _) -> raise (Failure "error: misuse of add_node"))
-      
-                          
-
+            raise (Failure "error: cannot add_node non-node to graph")
+        | (_, _) -> 
+            raise (Failure "error: cannot add_node to non-graph"))
+      | GAdd(g, id, v) -> let g' = expr g and id' = expr id and v' = expr v 
+        in (match (g', id', v') with
+          ((Graph(tg), _), (Int, _), (tn, _)) ->
+          if tg = tn then (Void, SGAdd(g', id', v'))
+          else raise (Failure ("error: adding mismatched type " 
+          ^ string_of_typ tn ^ " to graph of " ^ string_of_typ tg))
+        | ((Graph(_), _), _,_) ->
+          raise (Failure "error: invalid parameters to add")
+        | (_, _, _) -> 
+          raise (Failure "error: cannot add to non-graph"))
+                        
     in
 
     let check_bool_expr e =
