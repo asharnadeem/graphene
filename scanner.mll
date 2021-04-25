@@ -69,8 +69,13 @@ rule token = parse
   | "push_front"          { PUSHFRONT }
   | "pop_back"            { POPBACK }
   | "pop_front"           { POPFRONT }
+  | "peek_back"           { PEEKBACK }
+  | "peek_front"          { PEEKFRONT }
+  | "add_all"             { ADDALL }
+  | "contains"            { CONTAINS } 
   | "add_node"            { ADDNODE }
   | "add"                 { ADD }
+ 
 
 (* literals *)
   | '\"' ([^'\"']* as str) '\"' { SLIT(str) }

@@ -39,6 +39,8 @@ void list_push_back(struct list *list, void *element);
 void list_push_front(struct list *list, void *element);
 void *list_pop_back(struct list *list);
 void *list_pop_front(struct list *list);
+void *list_peek_back(struct list *list);
+void *list_peek_front(struct list *list);
 int list_size(struct list *list);
 int list_empty(struct list *list);
 

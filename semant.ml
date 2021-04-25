@@ -272,6 +272,14 @@ let check (globals, functions) =
             (List(tl),_) -> (tl, SPopFront(l'))
           | _ -> raise (Failure ("error: pop_front on non-list " 
           ^ string_of_expr l)))
+      | PeekBack(l) -> let l' = expr l in (match l' with
+            (List(tl),_) -> (tl, SPeekBack(l'))
+          | _ -> raise (Failure ("error: peek_back on non-list " 
+          ^ string_of_expr l)))
+      | PeekFront(l) -> let l' = expr l in (match l' with
+            (List(tl),_) -> (tl, SPeekFront(l'))
+          | _ -> raise (Failure ("error: peek_front on non-list " 
+          ^ string_of_expr l)))
       | AddNode(g, e) -> let g' = expr g  and e' = expr e 
         in (match (g', e') with 
           ((Graph(tg), _), (Node(tn), _)) ->  

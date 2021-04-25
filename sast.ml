@@ -23,6 +23,8 @@ and sx =
   | SPushFront of sexpr * sexpr
   | SPopBack of sexpr 
   | SPopFront of sexpr
+  | SPeekBack of sexpr 
+  | SPeekFront of sexpr
   | SAddNode of sexpr * sexpr
   | SGAdd of sexpr * sexpr * sexpr
 
@@ -78,6 +80,8 @@ let rec string_of_sexpr (t, e) =
                       ^ string_of_sexpr e ^ ")"
   | SPopBack(l) -> string_of_sexpr l ^ ".pop_back()"
   | SPopFront(l) -> string_of_sexpr l ^ ".pop_front()"
+  | SPeekBack(l) -> string_of_sexpr l ^ ".peek_back()"
+  | SPeekFront(l) -> string_of_sexpr l ^ ".peek_front()"
   | SAddNode(g, e) -> string_of_sexpr g ^ ".add_node(" ^ string_of_sexpr e ^")"
   | SGAdd(g, id, v) -> string_of_sexpr g ^ ".add(" 
     ^ string_of_sexpr id ^ ", " ^ string_of_sexpr v ^ ")"

@@ -45,6 +45,8 @@ type expr =
   | PushFront of expr * expr
   | PopBack of expr 
   | PopFront of expr
+  | PeekBack of expr 
+  | PeekFront of expr
   | AddNode of expr * expr
   | Noexpr
   | UEdge of expr * expr
@@ -139,6 +141,8 @@ let rec string_of_expr = function
         ^ string_of_expr e ^ ")"
   | PopBack(l) -> string_of_expr l ^ ".pop_back()"
   | PopFront(l) -> string_of_expr l ^ ".pop_front()"
+  | PeekBack(l) -> string_of_expr l ^ ".peek_back()"
+  | PeekFront(l) -> string_of_expr l ^ ".peek_front()"
   | AddNode(g, e) -> string_of_expr g ^ ".add_node(" ^ string_of_expr e ^")"
   | GAdd(g, id, v) -> string_of_expr g ^ ".add(" 
     ^ string_of_expr id ^ ", " ^  string_of_expr v ^ ")"

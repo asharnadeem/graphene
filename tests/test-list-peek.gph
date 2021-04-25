@@ -1,0 +1,9 @@
+int main() {
+    list<string> l;
+    l.push_back("a");
+    l.push_back("b");
+    print(l.size);
+    print(l.peek_front());
+    print(l.peek_back());
+    print(l.size);
+}

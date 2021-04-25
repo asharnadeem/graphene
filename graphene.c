@@ -104,6 +104,17 @@ void *list_pop_front(struct list *list)
     return NULL;
 }
 
+void *list_peek_back(struct list *list) {
+  struct list_element *tmp = list->head;
+  while(tmp->next != NULL) {
+    tmp = tmp -> next;
+  }
+  return tmp->element;
+}
+void *list_peek_front(struct list *list) {
+  return list->head->element;
+}
+
 int list_size(struct list *list)
 {
     return list->size;

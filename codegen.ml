@@ -7,6 +7,7 @@ module StringMap = Map.Make(String)
 let get_type(t, _) = t
 
 (* TODO: enforce uniqueness of ids in graphs in C
+         handle duplicate edges (probably replace weight)
          DONE???? *)
 
 (* translate : Sast.program -> Llvm.module *)
@@ -117,6 +118,16 @@ let translate (globals, functions) =
       L.function_type void_ptr_t [| lst_t |] in
   let list_pop_front_f : L.llvalue =
       L.declare_function "list_pop_front" list_pop_front_t the_module in
+
+  let list_peek_back_t : L.lltype = 
+      L.function_type void_ptr_t [| lst_t |] in
+  let list_peek_back_f : L.llvalue =
+      L.declare_function "list_peek_back" list_peek_back_t the_module in
+
+  let list_peek_front_t : L.lltype = 
+      L.function_type void_ptr_t [| lst_t |] in
+  let list_peek_front_f : L.llvalue =
+      L.declare_function "list_peek_front" list_peek_front_t the_module in
 
   let graph_add_node_t : L.lltype = 
       L.function_type i32_t [| graph_t ; node_t |] in
@@ -503,6 +514,22 @@ let translate (globals, functions) =
           let cast = L.build_bitcast ptr ty "cast" builder in 
         L.build_load cast "val" builder)
           | _ -> raise (Failure "internal error on pop_front"))
+      | SPeekBack(s) -> (match s with
+            (A.List(t), l)  -> (let ptr = (L.build_call list_peek_back_f 
+          [| expr builder (A.List(t), l) |] "list_peek_back" builder)
+          and ty = (L.pointer_type (ltype_of_typ t)) in 
+             
+          let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder)
+          | _ -> raise (Failure "internal error on peek_back"))
+      | SPeekFront(s) -> (match s with
+            (A.List(t), l)  -> (let ptr = (L.build_call list_peek_front_f 
+          [| expr builder (A.List(t), l) |] "list_peek_front" builder)
+          and ty = (L.pointer_type (ltype_of_typ t)) in 
+             
+          let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder)
+          | _ -> raise (Failure "internal error on peek_front"))
       | SAddNode(g, e) ->  L.build_call graph_add_node_f 
           [| expr builder g; expr builder e|] "graph_add_node" builder
       | SGAdd(g, id, v) -> (match g with
