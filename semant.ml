@@ -321,11 +321,6 @@ let check (globals, functions) =
               (ta, _) when ta = t-> arg'
             | _ -> raise (Failure "error: mismatch arg type in add_all"))
             in let args = List.map check_arg el in (List(t), SAddAll(e', args))
-        | (Graph(t), _) -> let check_arg arg = let arg' = expr arg in
-                (match arg' with 
-              (Node(ta), _) when ta = t-> arg'
-            | _ -> raise (Failure "error: mismatch arg type in add_all"))
-            in let args = List.map check_arg el in (Graph(t), SAddAll(e', args))
         | _ -> raise (Failure "error: addall not used on list or graph"))
                         
     in

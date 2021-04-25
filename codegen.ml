@@ -564,7 +564,6 @@ let translate (globals, functions) =
           [| s'; cast|] "list_push_back" builder)) in
           List.iter addfun el;
           s'
-        | (A.Graph(t), _) -> raise (Failure "notimp")
         | _ -> raise (Failure "internal error on addall"))
       in
       
