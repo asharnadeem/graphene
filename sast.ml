@@ -29,6 +29,7 @@ and sx =
   | SGAdd of sexpr * sexpr * sexpr
   | SContains of sexpr * sexpr
   | SContainsId of sexpr * sexpr
+  | SAddAll of sexpr * sexpr list
 
 type sstmt = 
     SExpr of sexpr
@@ -91,6 +92,8 @@ let rec string_of_sexpr (t, e) =
     string_of_sexpr g ^ ".contains(" ^ string_of_sexpr n ^ ")"
   | SContainsId(g, i) -> 
     string_of_sexpr g ^ ".contains_id(" ^ string_of_sexpr i ^ ")"
+  | SAddAll(e, el) -> string_of_sexpr e ^ 
+      ".add_all(" ^ String.concat ", " (List.map string_of_sexpr el) ^ ")"
 
   ) ^ ")"
   

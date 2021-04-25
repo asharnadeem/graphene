@@ -8,8 +8,7 @@
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE PRINT
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID 
 %token PUSHBACK PUSHFRONT POPBACK POPFRONT PEEKBACK PEEKFRONT 
-%token CONTAINS CONTAINSID ADDALL
-%token ADDNODE ADD
+%token CONTAINS CONTAINSID ADDALL ADDNODE ADD 
 %token <int> LITERAL
 %token <string> FLIT
 %token <string> SLIT
@@ -154,6 +153,7 @@ expr:
   | expr DOT ADD LPAREN expr COMMA expr RPAREN { GAdd($1, $5, $7) }
   | expr DOT CONTAINS LPAREN expr RPAREN { Contains($1, $5) }
   | expr DOT CONTAINSID LPAREN expr RPAREN { ContainsId($1, $5) }
+  | expr DOT ADDALL LPAREN args_list RPAREN { AddAll( $1, List.rev $5 )}
 
 literal:
     ID { Id($1) }

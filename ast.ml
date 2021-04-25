@@ -56,6 +56,7 @@ type expr =
   | GAdd of expr * expr * expr
   | Contains of expr * expr
   | ContainsId of expr * expr
+  | AddAll of expr * expr list
 
 type bind = typ * string
 
@@ -151,6 +152,8 @@ let rec string_of_expr = function
   | Contains(g, n) -> string_of_expr g ^ ".contains(" ^ string_of_expr n ^ ")"
   | ContainsId(g, i) -> 
     string_of_expr g ^ ".contains_id(" ^ string_of_expr i ^ ")"
+  | AddAll(e, el) -> string_of_expr e ^ 
+      ".add_all(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"

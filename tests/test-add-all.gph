@@ -1,0 +1,26 @@
+int main() {
+    list<string> l;
+    l.add_all("a", "b", "c", "d", "e");
+    node <int> a, b, c;
+    a.id = 0; a.val = 3;
+    b.id = 1; b.val = 3;
+    c.id = 2; c.val = 3;
+    int i;
+    for(i = 0; i < l.size; i = i + 1) {
+        print(l.peek_front());
+        print(l[i]);
+    }
+    list<node<int>> l2;
+    l2.add_all(a, b, c);
+    for(i = 0; i < l2.size; i = i + 1) {
+        print(l2.peek_front());
+        print(l2[i]);
+    }
+    list<float> l3;
+    l3.add_all(0.1, 0.2, 0.3);
+    for(i = 0; i < l3.size; i = i + 1) {
+        print(l3.peek_front());
+        print(l3[i]);
+    }
+    
+}

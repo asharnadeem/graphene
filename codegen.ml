@@ -310,11 +310,11 @@ let translate (globals, functions) =
             and ty = (L.pointer_type (ltype_of_typ t)) in 
           let cast = L.build_bitcast ptr ty "cast" builder in 
           L.build_load cast "val" builder
-          | _ -> let ptr = L.build_call list_index_f 
+          | _ ->  let ptr = L.build_call list_index_f 
             [|expr builder s; expr builder e |] "list_index" builder
-            and ty =  (ltype_of_typ t)
-            in 
-            L.build_bitcast ptr ty "cast" builder)
+            and ty =  (L.pointer_type (ltype_of_typ t)) in
+            let cast = L.build_bitcast ptr ty "cast" builder in
+            L.build_load cast "val" builder)
         | A.Graph(_)-> 
           L.build_call graph_get_node_f 
           [| expr builder s; expr builder e |] "graph_get_node" builder
@@ -554,6 +554,18 @@ let translate (globals, functions) =
           [|expr builder g; expr builder n|] "graph_contains_node" builder
       | SContainsId(g, id) -> L.build_call graph_contains_id_f  
           [|expr builder g; expr builder id|] "graph_contains_id" builder
+      | SAddAll(s, el) -> let s' = expr builder s in (match s with 
+          (A.List(t),_) -> let addfun e = ( 
+          let e' = expr builder e in
+          let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+          ignore (L.build_store e' ptr builder); 
+          let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
+          ignore(L.build_call list_push_back_f 
+          [| s'; cast|] "list_push_back" builder)) in
+          List.iter addfun el;
+          s'
+        | (A.Graph(t), _) -> raise (Failure "notimp")
+        | _ -> raise (Failure "internal error on addall"))
       in
       
     (* LLVM insists each basic block end with exactly one "terminator" 
