@@ -275,6 +275,10 @@ let translate (globals, functions) =
             let e1' = expr builder e1
             and e2' = expr builder e2 in
             L.build_icmp L.Icmp.Eq e1' e2' "tmp" builder
+          else if op = A.Neq then
+            let e1' = expr builder e1
+            and e2' = expr builder e2 in
+            L.build_icmp L.Icmp.Ne e1' e2' "tmp" builder
           else raise (Failure ("invalid operator " ^ A.string_of_binop op ^
             " on " ^ A.string_of_typ ty))
       | SIndex ((lt, _) as s, e) -> (match lt with
