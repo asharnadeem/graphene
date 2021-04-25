@@ -383,6 +383,34 @@ let translate (globals, functions) =
             A.Void -> ""
           | _ -> f ^ "_result") in
            L.build_call fdef (Array.of_list llargs) result builder
+      | SPrint(e) -> (match e with
+          (A.Int, _) -> 
+            L.build_call printf_f [| int_format_str ; (expr builder e) |]
+            "printf" builder
+        | (A.Float, _) ->
+            L.build_call printf_f [| float_format_str ; (expr builder e) |]
+            "printf" builder
+        | (A.String, _) ->
+            L.build_call printf_f [| str_format_str ; (expr builder e) |]
+            "printf" builder
+        | (A.Node(t), _) -> 
+          let id = expr builder ((A.Int), (SAccess(e, "id")))
+          in let nval = (expr builder (t, SAccess(e, "val")))
+          in let edges = (expr builder 
+            (A.Int, SAccess((A.List(A.Edge(t)), SAccess(e, "edges")), "size")))
+           in  let str_mod  = 
+          (match t with
+            A.Int -> "d"
+          | A.Float -> "f"
+          | A.String -> "s"
+          | _ -> raise (Failure "internal error on node") )
+          in let format_str = 
+            L.build_global_stringptr 
+            ("id: %d, val: %" ^ str_mod ^ ", edges: %d") "fmt" builder in
+            L.build_call printf_f 
+            [| format_str; id; nval; edges|] 
+            "printf" builder
+        | _ -> raise (Failure "internal error on print") )
       | SAccess (s, x) -> let s' = expr builder s in 
           (match s with 
           (A.Node(t), _) ->

@@ -38,6 +38,7 @@ type expr =
   | Assign of string * expr
   | AssignField of expr * string * expr
   | Call of string * expr list
+  | Print of expr
   | Access of expr * string
   | Index of expr * expr
   | PushBack of expr * expr
@@ -123,6 +124,7 @@ let rec string_of_expr = function
       ^ "." ^ s ^ " = " ^ string_of_expr e
   | Call(f, el) -> 
     f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
+  | Print(e) -> "print(" ^ string_of_expr e ^ ")"
   | Access(x, s) -> string_of_expr x ^ "." ^ s
   (* | Index(x, e) -> string_of_expr x ^ "[" ^ string_of_expr e ^ "]" *)
   | Noexpr -> ""

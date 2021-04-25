@@ -1,6 +1,6 @@
 int main() {
   node<float> j;
   j.val = 0.1;
-  printf(j.val);
+  print(j.val);
   return 0;
 }

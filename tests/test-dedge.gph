@@ -6,6 +6,6 @@ int main() {
   t = a.edges;
   list<edge<float>> s = a.edges;
   a.val = 0.0;
-  printf(a.val);
+  print(a.val);
   return 0;
 }

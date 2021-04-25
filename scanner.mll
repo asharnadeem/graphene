@@ -64,6 +64,7 @@ rule token = parse
   | "return"              { RETURN }
   | "continue"            { CONTINUE }
   | "break"               { BREAK }
+  | "print"               { PRINT }
   | "push_back"           { PUSHBACK }
   | "pop_back"            { POPBACK }
 

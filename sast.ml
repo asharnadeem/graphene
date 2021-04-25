@@ -11,6 +11,7 @@ and sx =
   | SAssign of string * sexpr
   | SAssignField of sexpr * string * sexpr
   | SCall of string * sexpr list
+  | SPrint of sexpr
   | SAccess of sexpr * string
   | SNoexpr
   | SUEdge of sexpr * sexpr
@@ -57,6 +58,7 @@ let rec string_of_sexpr (t, e) =
         ^ s ^ " = " ^ string_of_sexpr e
   | SCall(f, el) -> 
       f ^ "(" ^ String.concat ", " (List.map string_of_sexpr el) ^ ")"
+  | SPrint(e) -> "print(" ^ string_of_sexpr e ^ ")"
   | SAccess(x, s) -> string_of_sexpr x ^ "." ^ s
   | SNoexpr -> ""
   | SUEdge(n1, n2) -> string_of_sexpr n1 ^ " <-> " ^ string_of_sexpr n2

@@ -5,7 +5,7 @@
 %token LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE COMMA SEMI COLON DOT
 %token PLUS MINUS TIMES DIVIDE MOD ASSIGN NOT EQ NEQ LT LEQ GT GEQ AND OR
 %token TILDE DIREDGE UNDIREDGE DGT DEDGE UEDGE DEDGEP UEDGEP
-%token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE 
+%token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE PRINT
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID 
 %token PUSHBACK POPBACK
 %token <int> LITERAL
@@ -118,7 +118,6 @@ expr:
   | NOT expr { Unop(Not, $2) }
   | ID ASSIGN expr { Assign($1, $3) }
   | expr DOT ID ASSIGN expr { AssignField($1, $3, $5) }
-  | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
   /* nodeA -> nodeB */
   | expr DEDGE expr { DEdge( $1, $3) }
@@ -140,8 +139,8 @@ expr:
   | expr DOT ID { Access($1, $3) } 
   /* queue[3] */
   | expr LSQUARE expr RSQUARE { Index($1, $3) }
-  /* [1,2,3,4,5] 
-  Why?  | LSQUARE args_opt RSQUARE { ListLit($2) } */
+  | ID LPAREN args_opt RPAREN { Call($1, $3) }
+  | PRINT LPAREN expr RPAREN { Print($3) }
   | expr DOT ID LPAREN args_opt RPAREN { Call( $3, $1 :: $5 ) }
   | expr DOT PUSHBACK LPAREN expr RPAREN { PushBack($1, $5) }
   | expr DOT POPBACK LPAREN RPAREN { PopBack($1) }

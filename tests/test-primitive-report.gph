@@ -8,17 +8,17 @@ int main()
     d = 0.25;
 
     string e = "foo";
-    prints(e);
+    print(e);
 
     print(a + b);
-    printf(c + d); 
+    print(c + d); 
     
     print(a - b); 
-    printf(c - d); 
+    print(c - d); 
     
     print(a * b); 
-    printf(c * d); 
+    print(c * d); 
     
     print(a / b); 
-    printf(c / d);
+    print(c / d);
 }

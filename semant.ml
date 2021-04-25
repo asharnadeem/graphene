@@ -37,44 +37,19 @@ let check (globals, functions) =
     in dups (List.sort (fun (_,a) (_,b) -> compare a b) binds)
   in check_binds "global" globals;
 
-  (* let check_list_binds (binds : sexpr list) =
-      List.iter valid_element_type binds;
-
-      let rec check_type = function
-          [] -> ()
-      | ((t1,_) :: (t2,_) :: _) when t1 != t2 ->
-              raise (Failure ("error: list elements of different types"))
-      | _ :: t -> check_type t
-      in check_type (List.sort (fun (a,_) (b,_) -> compare a b) binds);
-      
-      (*first_element(binds)*)
-  in  *)
-
-  (* Check functions *)
-  let built_in_decls_one = 
-    let add_bind_one map (name, t) = StringMap.add name {
-      typ = Void;
-      fname = name;
-      formals = [(t, "x")];
-      body = [] } map
-      in List.fold_left add_bind_one StringMap.empty [ 
-        ("print", Int);
-        ("printf", Float);
-        ("prints", String)
-     ]
-
-  in let built_in_decls_two = 
+  (* check functions *)
+  let built_in_decls_pre = 
     let add_bind_two map (ft, name, t) = StringMap.add name {
       typ = ft;
       fname = name;
       formals = [(t, "x")];
       body = [] } map
-      in List.fold_left add_bind_two built_in_decls_one [ 
+      in List.fold_left add_bind_two StringMap.empty [ 
         (Int, "list_empty", List(Int));
         (Int, "list_pop_back", List(Int));
         (Int, "list_pop_front", List(Int));
-        (Int, "node_get_id", Node(Int));
-        (Int, "node_get_val", Node(Int))
+        (* (Int, "node_get_id", Node(Int)); *)
+        (* (Int, "node_get_val", Node(Int)) *)
      ]
 
   in let built_in_decls = 
@@ -83,12 +58,12 @@ let check (globals, functions) =
       fname = name;
       formals = [(t1, "x"); (t2, "y")];
       body = [] } map
-      in List.fold_left add_bind built_in_decls_two [ 
-        (Int, "list_index", List(Int), Int;);
+      in List.fold_left add_bind built_in_decls_pre [ 
+        (* (Int, "list_index", List(Int), Int;); *)
         (* (Int, "list_push_back", List(Int), Int); *)
         (Int, "list_push_front", List(Int), Int);
-        (Int, "node_set_id", Node(Int), Int);
-        (Int, "node_set_val", Node(Int), Int);
+        (* (Int, "node_set_id", Node(Int), Int); *)
+        (* (Int, "node_set_val", Node(Int), Int); *)
         (Int, "graph_add_node", Graph(Int), Node(Int));
         (Node(Int), "graph_get_node", Graph(Int), Int);
      ]
@@ -451,6 +426,9 @@ let check (globals, functions) =
           in  
           let args = List.map2 check_call fd.formals el
           in (fd.typ, SCall(f, args))
+      | Print(e) -> let e' = expr e in (match e' with
+            (Void, _) -> raise (Failure "print used on void")
+          | _ -> (Void, SPrint(e')))
       | Access(x, s) -> let sx = expr x in (match sx with
             (Node(tn), _) -> (match s with 
                 "val" -> (tn, SAccess(sx, s))

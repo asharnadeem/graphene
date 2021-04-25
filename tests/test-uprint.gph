@@ -1,0 +1,18 @@
+int main() {
+    int a = 1;
+    float b = 2.0;
+    string c = "3";
+    node<string> n, o, p, q, r, s, t;
+    n.id = 4;
+    n.val = "5";
+    n -> o;
+    n -> p;
+    n -> q;
+    n -> r;
+    n -> s;
+    n -> t;
+    print(a);
+    print(b);
+    print(c);
+    print(n);
+}
