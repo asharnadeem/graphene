@@ -6,8 +6,7 @@ module StringMap = Map.Make(String)
 
 let get_type(t, _) = t
 
-(* TODO: move more functions to ast types
-         enforce uniqueness of ids in graphs in C
+(* TODO: enforce uniqueness of ids in graphs in C
          graph.add(e1,e2)
          print()
          ints don't work as booleans
@@ -103,11 +102,6 @@ let translate (globals, functions) =
   let list_index_f : L.llvalue =
       L.declare_function "list_index" list_index_t the_module in
 
-  let list_empty_t : L.lltype =
-      L.function_type i32_t [| lst_t |] in  
-  let list_empty_f : L.llvalue =
-      L.declare_function "list_empty" list_empty_t the_module in
-
   let list_push_back_t : L.lltype = 
       L.function_type i32_t [| lst_t ; void_ptr_t |] in
   let list_push_back_f : L.llvalue =
@@ -127,26 +121,6 @@ let translate (globals, functions) =
       L.function_type void_ptr_t [| lst_t |] in
   let list_pop_front_f : L.llvalue =
       L.declare_function "list_pop_front" list_pop_front_t the_module in
-
-  (* let node_set_id_t : L.lltype = 
-      L.function_type void_ptr_t [| node_t ; i32_t|] in
-  let node_set_id_f : L.llvalue =
-      L.declare_function "node_set_id" node_set_id_t the_module in
-
-  let node_set_val_t : L.lltype = 
-      L.function_type void_ptr_t [| node_t ; void_ptr_t|] in
-  let node_set_val_f : L.llvalue =
-      L.declare_function "node_set_val" node_set_val_t the_module in
-
-  let node_get_id_t : L.lltype = 
-      L.function_type i32_t [| node_t |] in
-  let node_get_id_f : L.llvalue =
-      L.declare_function "node_get_id" node_get_id_t the_module in
-
-  let node_get_val_t : L.lltype = 
-      L.function_type void_ptr_t [| node_t |] in
-  let node_get_val_f : L.llvalue =
-      L.declare_function "node_get_val" node_get_val_t the_module in *)
 
   let graph_add_node_t : L.lltype = 
       L.function_type i32_t [| graph_t ; node_t |] in
@@ -207,13 +181,6 @@ let translate (globals, functions) =
             | SDeclare(t, ([s] as l), _) when List.length l = 1 
                           -> (t, s) :: locals
             | _ -> locals) t
-
-                        (* SDeclare(t, s, (_, Sast.SNoexpr)) ->
-         (List.fold_left (fun ldec dec -> (t, dec) :: ldec) [] s)
-          :: locals
-                      | SDeclare(t, ([x] as l), _) when List.length l = 1 
-                          -> locals
-                      | _ -> locals) t *)
         in
         let complete_locals = gather_locals [] fdecl.sbody
         in
@@ -301,15 +268,6 @@ let translate (globals, functions) =
             A.Neg when t = A.Float -> L.build_fneg 
           | A.Neg                  -> L.build_neg
           | A.Not                  -> L.build_not) e' "tmp" builder
-      | SCall ("print", [e]) | SCall ("printb", [e]) ->
-	  L.build_call printf_f [| int_format_str ; (expr builder e) |]
-	    "printf" builder
-      | SCall ("printf", [e]) -> 
-	  L.build_call printf_f [| float_format_str ; (expr builder e) |]
-	    "printf" builder
-      | SCall ("prints", [e]) -> 
-    L.build_call printf_f [| str_format_str ; (expr builder e) |]
-      "printf" builder
       | SIndex ((lt, _) as s, e) -> (match lt with
           A.List(t) -> (match t with
             A.Int | A.Float ->
@@ -327,55 +285,7 @@ let translate (globals, functions) =
           L.build_call graph_get_node_f 
           [| expr builder s; expr builder e |] "graph_get_node" builder
         | _ -> raise (Failure 
-          ("this should never happen, error in semant"))
-      )
-      | SCall ("list_empty", [ A.List(t), l ]) -> 
-            L.build_call list_empty_f 
-          [| expr builder (t, l) |] "list_empty" builder
-      | SCall ("list_push_front", [(A.List(t),l); e]) -> 
-        let e' = expr builder e in
-        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
-        ignore (L.build_store e' ptr builder); 
-        let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
-           L.build_call list_push_front_f 
-          [| expr builder (t, l); cast|] "list_push_front" builder
-      | SCall ("list_pop_back", [ (A.List(t), l) ]) -> 
-        let ptr = (L.build_call list_pop_back_f 
-          [| expr builder (A.List(t), l) |] "list_pop_back" builder)
-          and ty = (L.pointer_type (ltype_of_typ t)) in 
-              if L.is_null ptr then (
-                raise (Failure 
-                  ("error: trying to pop from uninitialized list")))
-                (* match t with
-                A.Int -> L.const_int i32_t 0
-              | A.Float -> L.const_float float_t 0.0 
-              | _ -> raise (Failure "NULL not implemented for this list index")) *)
-          else (let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder)
-      | SCall ("list_pop_front", [ (A.List(t), l) ]) -> 
-        let ptr = (L.build_call list_pop_front_f 
-          [| expr builder (A.List(t), l) |] "list_pop_front" builder)
-          and ty = (L.pointer_type (ltype_of_typ t)) in 
-              if L.is_null ptr then (
-                raise (Failure 
-                  ("error: trying to pop from uninitialized list") ) )
-                (* match t with
-                A.Int -> L.const_int i32_t 0
-              | A.Float -> L.const_float float_t 0.0 
-              | _ -> raise (Failure "NULL not implemented for this list index")) *)
-          else (let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder)
-      | SCall ("graph_add_node", [(A.Graph(t),l); e]) -> (*let list_type = match t with
-          A.List(A.Int) -> L.const_int i32_t 1
-        | A.List(A.Float) -> L.const_int i32_t 2
-        | _ -> L.const_int (ltype_of_typ t) 0
-        in  *)
-  
-           L.build_call graph_add_node_f 
-          [| expr builder (t, l); expr builder e|] "graph_add_node" builder
-      | SCall ("graph_get_node", [(A.Graph(t),l); e]) ->
-           L.build_call graph_get_node_f 
-          [| expr builder (t, l); expr builder e |] "graph_get_node" builder
+          ("this should never happen, error in semant")) )
       | SCall (f, args) ->
            let (fdef, fdecl) = StringMap.find f function_decls in
      let llargs = List.rev (List.map (expr builder) (List.rev args)) in
@@ -427,7 +337,6 @@ let translate (globals, functions) =
             L.build_load cast ("struct.val." ^ x ^ ".value") builder)
             | "edges" -> 
               (let str_ptr = L.build_struct_gep s' 2 "struct.ptr" builder in
-              (* let edge_ptr = L.build_load str_ptr "edge.ptr" builder in  *)
               L.build_load str_ptr ("struct.val." ^ x ) builder) 
             | _ -> raise (Failure 
                 ("this should never happen, error in semant")))
@@ -457,14 +366,6 @@ let translate (globals, functions) =
                 let str_ptr = L.build_struct_gep s' 2 "struct.ptr" builder
                 in L.build_load str_ptr ("struct.val." ^ x) builder
             | _ -> raise (Failure "internal error in accessing"))
-        (* let mem = (match x with
-              "weight" -> 0
-            | "to" -> 1
-            | "t" -> 2
-            | _ -> raise (Failure "internal error in accessing")) in
-          let p = L.build_struct_gep s' mem "struct.ptr" builder
-          in L.build_load p ("struct.val." ^ x) builder *)
-
         | _ -> raise (Failure "internal error")
           )
           
@@ -564,21 +465,33 @@ let translate (globals, functions) =
           [| expr builder (A.List(t), l); cast|] "list_push_back" builder);
           expr builder (A.List(t),l) )
           | _ -> raise (Failure ("internal error on pushback")) )
+      | SPushFront(s, e) -> (match (s, e) with 
+           ((A.List(t), l), _) -> (let e' = expr builder e in
+        let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
+        ignore (L.build_store e' ptr builder); 
+        let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
+          ignore (L.build_call list_push_front_f 
+          [| expr builder (A.List(t), l); cast|] "list_push_front" builder);
+          expr builder (A.List(t),l) )
+          | _ -> raise (Failure ("internal error on push_front")) )
       | SPopBack(s) -> (match s with
             (A.List(t), l)  -> (let ptr = (L.build_call list_pop_back_f 
           [| expr builder (A.List(t), l) |] "list_pop_back" builder)
           and ty = (L.pointer_type (ltype_of_typ t)) in 
-              if L.is_null ptr then (
-                raise (Failure 
-                  ("error: trying to pop from uninitialized list")))
-                (* match t with
-                A.Int -> L.const_int i32_t 0
-              | A.Float -> L.const_float float_t 0.0 
-              | _ -> raise (Failure "NULL not implemented for this list index")) *)
-          else (let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder))
-          | _ -> raise (Failure "internal error on popback"))
-            
+             
+          let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder)
+          | _ -> raise (Failure "internal error on pop_back"))
+      | SPopFront(s) -> (match s with
+            (A.List(t), l)  -> (let ptr = (L.build_call list_pop_front_f 
+          [| expr builder (A.List(t), l) |] "list_pop_front" builder)
+          and ty = (L.pointer_type (ltype_of_typ t)) in 
+             
+          let cast = L.build_bitcast ptr ty "cast" builder in 
+        L.build_load cast "val" builder)
+          | _ -> raise (Failure "internal error on pop_front"))
+      | SAddNode(g, e) ->  L.build_call graph_add_node_f 
+          [| expr builder g; expr builder e|] "graph_add_node" builder
       in
       
     (* LLVM insists each basic block end with exactly one "terminator" 

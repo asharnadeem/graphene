@@ -42,7 +42,10 @@ type expr =
   | Access of expr * string
   | Index of expr * expr
   | PushBack of expr * expr
+  | PushFront of expr * expr
   | PopBack of expr 
+  | PopFront of expr
+  | AddNode of expr * expr
   | Noexpr
   | UEdge of expr * expr
   | UEdgeC of expr * expr * expr
@@ -109,13 +112,6 @@ let rec string_of_expr = function
   | Slit(x) -> "\"" ^ x ^ "\""
   | Flit(x) -> x 
   | Id(x) -> x
-(*  | UEdge(n1, n2) -> "(" ^ string_of_expr n1 ^ ", " ^ string_of_expr n2 ^ ")"
-  | UEdgeC(n1, e, n2) -> "(" ^ string_of_expr n1 ^ ", " ^ string_of_expr e ^
-    ", " ^ string_of_expr n2 ^ ")"
-  | DEdge(n1, n2) -> "(" ^ string_of_expr n1 ^ " > " ^ string_of_expr n2 ^ ")"
-  | DEdgeC(n1, e, n2) -> "(" ^ string_of_expr n1 ^ ", " ^ string_of_expr e ^    
-    "> " ^ string_of_expr n2 ^ ")"
-*)  
   | Unop(o, e) -> string_of_unop o ^ string_of_expr e
   | Binop(e1, o, e2) -> string_of_expr e1 ^ " " ^ 
     string_of_binop o ^ " " ^ string_of_expr e2
@@ -138,7 +134,11 @@ let rec string_of_expr = function
   | Index(l, i) -> string_of_expr l ^ "[" ^ string_of_expr i ^ "]"
   | PushBack(l, e) -> string_of_expr l ^ ".push_back(" 
         ^ string_of_expr e ^ ")"
+  | PushFront(l, e) -> string_of_expr l ^ ".push_front(" 
+        ^ string_of_expr e ^ ")"
   | PopBack(l) -> string_of_expr l ^ ".pop_back()"
+  | PopFront(l) -> string_of_expr l ^ ".pop_front()"
+  | AddNode(g, e) -> string_of_expr g ^ ".add_node(" ^ string_of_expr e ^")"
 
 let rec string_of_stmt = function
     Expr(e) -> string_of_expr e ^ ";\n"

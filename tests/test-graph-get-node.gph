@@ -7,6 +7,6 @@ int main()
     print(n.id);
     g.add_node(n);
     g.add_node(j);
-    print(g.get_node(10).id);
+    print(g[10].id);
     print(g[1].id);
 }

@@ -66,7 +66,10 @@ rule token = parse
   | "break"               { BREAK }
   | "print"               { PRINT }
   | "push_back"           { PUSHBACK }
+  | "push_front"          { PUSHFRONT }
   | "pop_back"            { POPBACK }
+  | "pop_front"           { POPFRONT }
+  | "add_node"            { ADDNODE }
 
 (* literals *)
   | '\"' ([^'\"']* as str) '\"' { SLIT(str) }

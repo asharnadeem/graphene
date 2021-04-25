@@ -20,7 +20,10 @@ and sx =
   | SDEdgeC of sexpr * sexpr * sexpr
   | SIndex of sexpr * sexpr
   | SPushBack of sexpr * sexpr
+  | SPushFront of sexpr * sexpr
   | SPopBack of sexpr 
+  | SPopFront of sexpr
+  | SAddNode of sexpr * sexpr
 
 type sstmt = 
     SExpr of sexpr
@@ -70,7 +73,11 @@ let rec string_of_sexpr (t, e) =
   | SIndex(l, i) -> string_of_sexpr l ^ "[" ^ string_of_sexpr i ^ "]"
   | SPushBack(l, e) -> string_of_sexpr l ^ ".push_back(" 
                       ^ string_of_sexpr e ^ ")"
+  | SPushFront(l, e) -> string_of_sexpr l ^ ".push_front(" 
+                      ^ string_of_sexpr e ^ ")"
   | SPopBack(l) -> string_of_sexpr l ^ ".pop_back()"
+  | SPopFront(l) -> string_of_sexpr l ^ ".pop_front()"
+  | SAddNode(g, e) -> string_of_sexpr g ^ ".add_node(" ^ string_of_sexpr e ^")"
   
   ) ^ ")"
   

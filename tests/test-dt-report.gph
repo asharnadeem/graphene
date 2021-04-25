@@ -13,5 +13,5 @@ int main()
     g.add_node(m);
     g.add_node(n);
 
-    print(g.get_node(1).val);
+    print(g[1].val);
 }

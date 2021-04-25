@@ -7,7 +7,8 @@
 %token TILDE DIREDGE UNDIREDGE DGT DEDGE UEDGE DEDGEP UEDGEP
 %token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE PRINT
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID 
-%token PUSHBACK POPBACK
+%token PUSHBACK PUSHFRONT POPBACK POPFRONT
+%token ADDNODE
 %token <int> LITERAL
 %token <string> FLIT
 %token <string> SLIT
@@ -143,7 +144,10 @@ expr:
   | PRINT LPAREN expr RPAREN { Print($3) }
   | expr DOT ID LPAREN args_opt RPAREN { Call( $3, $1 :: $5 ) }
   | expr DOT PUSHBACK LPAREN expr RPAREN { PushBack($1, $5) }
+  | expr DOT PUSHFRONT LPAREN expr RPAREN { PushFront($1, $5) }
   | expr DOT POPBACK LPAREN RPAREN { PopBack($1) }
+  | expr DOT POPFRONT LPAREN RPAREN { PopFront($1) }
+  | expr DOT ADDNODE LPAREN expr RPAREN { AddNode($1, $5) }
 
 literal:
     ID { Id($1) }
