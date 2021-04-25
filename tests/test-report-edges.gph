@@ -1,0 +1,9 @@
+int main()
+{
+    node<int> m, n;
+    m <-> n;
+    
+    list<edge<int>> l = m.edges;
+    
+    print(m.edges)
+}

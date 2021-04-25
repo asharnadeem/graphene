@@ -1,0 +1,26 @@
+int main()
+{
+    list<int> l;
+    
+    int i = 0;
+    while(i < 5)
+    {
+        l.push_front(i);
+        i = i + 1;
+    }
+
+    i = 0;
+    while(i < l.size)
+    {
+        print(l[i]);
+        i = i + 1;
+    }
+
+    print(l.peek_front());
+
+    while(l.size > 0)
+    {
+        print(l.size);
+        l.pop_front();
+    }
+}
