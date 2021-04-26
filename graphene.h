@@ -6,13 +6,13 @@ struct list_element
     struct list_element *next;
 };
 
-struct list 
+struct list
 {
     int size;
     struct list_element *head;
 };
 
-struct edge 
+struct edge
 {
     void *weight;
     struct node *dest;
@@ -27,7 +27,7 @@ struct node
 };
 
 struct graph
-{   
+{
     struct list *nodes;
     struct node *root;
 };
@@ -59,7 +59,7 @@ struct node *graph_get_node(struct graph *graph, int key);
 int graph_contains_node(struct graph *graph, struct node *node);
 int graph_contains_id(struct graph *graph, int id);
 
-int string_cmp(void *v1, void*v2);
+int string_cmp(void *v1, void *v2);
 static const char font[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x1c, 0x3e, 0x61, 0x41, 0x43, 0x3e, 0x1c, 0x00,
