@@ -2,5 +2,6 @@ int main() {
   node <int> a;
   node <int> b;
   a <-> b;
+  print(b.edges[0].weight);
   return 0;
 }

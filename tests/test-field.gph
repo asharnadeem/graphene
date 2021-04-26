@@ -15,8 +15,8 @@ int main() {
     ll.push_back(n);
  
     //print(ll[0]);
-    print(g.nodes[0].edges[0].to.val);
-    print(n.edges[0].to.val);
-    print(g.nodes[1].edges[0].to.val);
-    print(m.edges[0].to.val); 
+    print(g.nodes[0].edges[0].dest.val);
+    print(n.edges[0].dest.val);
+    print(g.nodes[1].edges[0].dest.val);
+    print(m.edges[0].dest.val); 
 }

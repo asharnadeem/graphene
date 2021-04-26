@@ -12,8 +12,8 @@ struct list {
 };
 
 struct edge {
-    int weight;
-    struct node *node;
+    void *weight;
+    struct node *dest;
     int t;
 };
 
@@ -48,7 +48,7 @@ struct node *node_init();
 void node_set_id(struct node *node, int id);
 void node_set_val(struct node *node, void *val);
 
-struct edge *edge_init(int w, struct node *n, int tr);
+struct edge *edge_init(void *w, struct node *n, int tr);
 
 struct graph *graph_init();
 int graph_size(struct graph *graph);

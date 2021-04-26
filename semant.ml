@@ -210,7 +210,7 @@ let check (globals, functions) =
               | _ -> raise (Failure ("error: invalid graph field " ^ s)))
           | (Edge(te), _) -> (match s with 
                 "weight" -> (te, SAccess(sx, s))
-              | "to" -> (Node(te), SAccess(sx, s))
+              | "dest" -> (Node(te), SAccess(sx, s))
               | "t" -> (Int, SAccess(sx, s))
               | _ -> raise (Failure ("error: invalid edge field " ^ s)))
           | _ -> raise 
@@ -320,6 +320,11 @@ let check (globals, functions) =
           (List(t),_) -> let check_arg arg = let arg' = expr arg in
                 (match arg' with 
               (ta, _) when ta = t-> arg'
+            | _ -> raise (Failure "error: mismatch arg type in add_all"))
+            in let args = List.map check_arg el in (List(t), SAddAll(e', args))
+        | (Graph(t), _) -> let check_arg arg = let arg' = expr arg in
+                (match arg' with 
+              (Node(ta), _) when ta = t-> arg'
             | _ -> raise (Failure "error: mismatch arg type in add_all"))
             in let args = List.map check_arg el in (List(t), SAddAll(e', args))
         | _ -> raise (Failure "error: addall not used on list or graph"))

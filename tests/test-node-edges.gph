@@ -1,11 +1,13 @@
 int main() {
     node<int> n, o, p, q;
+    o.id = 0; p.id = 1; q.id = 2;
     q -> o -> p;
     n.val = 20;
     n.id = 30;
     list<int> l;
     l.push_back(1);
     print(l[0]);
-    list<edge<int>> j = n.edges;
+    list<edge<int>> j = q.edges;
+    print(q.edges.size);
     return 0;
 }

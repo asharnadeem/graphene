@@ -1,9 +1,9 @@
 int main()
 {
-    node<int> m, n;
-    m <-> n;
+    node<string> m, n;
+    m <->["hello"] n;
     
-    list<edge<int>> l = m.edges;
+    list<edge<string>> l = m.edges;
     
-    print(m.edges)
+    print(m.edges[0].weight);
 }

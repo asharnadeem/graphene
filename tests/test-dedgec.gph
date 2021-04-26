@@ -1,6 +1,7 @@
 int main() {
   node<string> a;
   node<string> b;
-  a ->[5] b;
+  a ->["5"] b;
+  print(a.edges[0].weight);
   return 0;
 }

@@ -167,11 +167,12 @@ struct node *node_init()
 
 /* ---------- Edge Functions ----------*/
 
-struct edge *edge_init(int w, struct node *n, int tr)
-{
+struct edge *edge_init(void* w, struct node *n, int tr)
+{   
+    // printf("INIT EDGE TO ID = %d", n->id);
     struct edge *edge = malloc(sizeof(struct edge));
     edge->weight = w;
-    edge->node = n;
+    edge->dest = n;
     edge->t = tr;
     return edge;
 }
