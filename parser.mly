@@ -1,11 +1,12 @@
-/* Ocamlyacc parser for Graphene */
+/* Ocamlyacc parser for Graphene 
+  Author: Matthew Sanchez */
 
 %{ open Ast %}
 
 %token LPAREN RPAREN LBRACE RBRACE LSQUARE RSQUARE COMMA SEMI COLON DOT
 %token PLUS MINUS TIMES DIVIDE MOD ASSIGN NOT EQ NEQ LT LEQ GT GEQ AND OR
-%token TILDE DIREDGE UNDIREDGE DGT DEDGE UEDGE DEDGEP UEDGEP
-%token RETURN BREAK CONTINUE IF ELSE FOR FOREACH WHILE PRINT
+%token DEDGE UEDGE 
+%token RETURN IF ELSE FOR FOREACH WHILE PRINT
 %token INT FLOAT STRING GRAPH NODE EDGE LIST VOID 
 %token PUSHBACK PUSHFRONT POPBACK POPFRONT PEEKBACK PEEKFRONT 
 %token CONTAINS CONTAINSID ADDALL ADDNODE ADD 
@@ -68,9 +69,7 @@ typ:
 
 vdecl:
     typ ID SEMI { ($1, $2) }
-/* remove? | typ ID LBRACE expr COMMA expr RBRACE SEMI { NodeLit($1, $4, $6) } */
-/*  | typ ID ASSIGN expr SEMI { bind($1, $2, Assign($2, $4)) } 
-*/
+
 stmt_list:
     /* nothing */   { [] }
   | stmt_list stmt  { $2 :: $1 }
@@ -78,15 +77,11 @@ stmt_list:
 stmt:
     expr SEMI { Expr $1 }
   | RETURN expr_opt SEMI { Return $2 }
-  | CONTINUE SEMI { Continue }
-  | BREAK SEMI { Break }
   | LBRACE stmt_list RBRACE { Block(List.rev $2) }
   | IF LPAREN expr RPAREN stmt %prec NOELSE { If($3, $5, Block([])) }
   | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) }
   | FOR LPAREN expr_opt SEMI expr_opt SEMI expr_opt RPAREN stmt 
                                                         { For($3, $5, $7, $9) }
-/*  | FOREACH LPAREN typ ID COLON expr RPAREN stmt { Foreach($3, $4, $6, $8) }
-*/
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
   | typ ID ASSIGN expr SEMI { Declare($1, [$2], Assign($2, $4)) }
   | typ id_list SEMI { Declare($1, $2, Noexpr) }
@@ -128,17 +123,9 @@ expr:
   | expr UEDGE expr { UEdge ( $1, $3) }
   /* nodeA <-> nodeB */
   | expr UEDGE LSQUARE expr RSQUARE expr { UEdgeC( $1, $4, $6) }
-  /* nodeA ~~ nodeB 
-  | expr UNDIREDGE expr { UEdge($1, $3) } */
-  /* nodeA ~(5)~ nodeB 
-  | expr TILDE LPAREN expr RPAREN TILDE expr { UEdgeC($1, $4, $7) }*/
-  /* nodeA ~>> nodeB 
-  | expr DIREDGE expr { DEdge($1, $3) }*/ 
-  /* nodeA ~(5)>> nodeB 
-  | expr TILDE LPAREN expr RPAREN DGT expr { DEdgeC($1, $4, $7) }*/
   /* node.id */ 
   | expr DOT ID { Access($1, $3) } 
-  /* queue[3] */
+  /* list[3] */
   | expr LSQUARE expr RSQUARE { Index($1, $3) }
   | ID LPAREN args_opt RPAREN { Call($1, $3) }
   | PRINT LPAREN expr RPAREN { Print($3) }

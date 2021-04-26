@@ -1,3 +1,5 @@
+(* Ocamlyacc scanner for Graphene 
+  Author: Matthew Sanchez *)
 { open Parser }
 
 let digit = ['0' - '9']
@@ -39,13 +41,6 @@ rule token = parse
 (* graph tokens *)
   | "->"          { DEDGE }
   | "<->"         { UEDGE }
-  | "->("         { DEDGEP }
-  | "<->("        { UEDGEP }
-  (*
-  | "~>>"                 { DIREDGE }
-  | ">>"                  { DGT }
-  | "~~"                  { UNDIREDGE }
-  | "~"                   { TILDE } *)
 
 (* keywords *)
   | "void"                { VOID }
@@ -59,11 +54,8 @@ rule token = parse
   | "if"                  { IF }
   | "else"                { ELSE }
   | "for"                 { FOR }
-  | "foreach"             { FOREACH }
   | "while"               { WHILE }
   | "return"              { RETURN }
-  | "continue"            { CONTINUE }
-  | "break"               { BREAK }
   | "print"               { PRINT }
   | "push_back"           { PUSHBACK }
   | "push_front"          { PUSHFRONT }
