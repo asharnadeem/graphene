@@ -1,5 +1,8 @@
-/* header file for Graphene build-in functionality
-    Author: Ashar Nadeem & Matthew Sanchez */
+/* 
+    header file for Graphene build-in functionality
+    Author: Ashar Nadeem & Matthew Sanchez 
+*/
+    
 #pragma once
 
 struct list_element

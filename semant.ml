@@ -1,5 +1,7 @@
-(* Semantic checking, produces sast from ast 
-  Author: Matthew Sanchez & Ashar Nadeem *)
+(* 
+  Semantic checking, produces sast from ast 
+  Author: Matthew Sanchez & Ashar Nadeem 
+*)
 
 open Ast
 open Sast

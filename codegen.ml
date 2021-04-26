@@ -1,5 +1,7 @@
-(* Generates LLVM IR from graphene input code (in the form of sast)
-  Authors: Matthew Sanchez & Ashar Nadeem *)
+(* 
+  Generates LLVM IR from graphene input code (in the form of sast)
+  Authors: Matthew Sanchez & Ashar Nadeem 
+*)
 
 module L = Llvm
 module A = Ast

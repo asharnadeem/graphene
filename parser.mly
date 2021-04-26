@@ -1,5 +1,7 @@
-/* Ocamlyacc parser for Graphene 
-  Author: Matthew Sanchez */
+/* 
+  Ocamlyacc parser for Graphene 
+  Author: Matthew Sanchez 
+*/
 
 %{ open Ast %}
 

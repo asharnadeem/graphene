@@ -1,5 +1,8 @@
-/* functions implementing Graphene build-in functionality
-    Author: Ashar Nadeem & Matthew Sanchez */
+/* 
+    functions implementing Graphene build-in functionality
+    Author: Ashar Nadeem & Matthew Sanchez 
+*/
+
 #include <stdlib.h>
 #include "graphene.h"
 

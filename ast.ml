@@ -1,3 +1,8 @@
+(* 
+  Abstract Syntax Tree 
+  Author: Matthew Sanchez
+*)
+
 type unop =
     Not 
   | Neg
@@ -126,7 +131,6 @@ let rec string_of_expr = function
     f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Print(e) -> "print(" ^ string_of_expr e ^ ")"
   | Access(x, s) -> string_of_expr x ^ "." ^ s
-  (* | Index(x, e) -> string_of_expr x ^ "[" ^ string_of_expr e ^ "]" *)
   | Noexpr -> ""
   | UEdge(n1, n2) -> "(" ^ string_of_expr n1 ^ " <-> " 
                           ^ string_of_expr n2 ^ ")"
@@ -164,8 +168,6 @@ let rec string_of_stmt = function
   | For(e1, e2, e3, s) -> 
       "for (" ^ string_of_expr e1 ^ " ; " ^ string_of_expr e2 ^ " ; " ^
       string_of_expr e3 ^ ")" ^ string_of_stmt s
-(*  | Foreach(t, s, expr, stmt) -> 
-*)
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
   | Declare(t, lx, Noexpr) -> string_of_typ t ^ " " ^
     (List.fold_left (fun l s -> s ^ "; " ^ l) "" lx ) ^ "\n"

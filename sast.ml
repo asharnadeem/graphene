@@ -1,3 +1,8 @@
+(* 
+  Semantically Checked Abstract Syntax Tree 
+  Author: Matthew Sanchez
+*)
+
 open Ast
 
 type sexpr = typ * sx
@@ -115,8 +120,6 @@ let rec string_of_sstmt = function
   | SDeclare(t, ([x] as l), e) when (List.length l) = 1 -> string_of_typ t ^ " " ^ x ^ "; " 
         ^ string_of_sexpr e ^ ";\n"
   | SDeclare(_) -> "PARSING ERROR\n"
-  (* | SDeclare(t, x, se) -> string_of_typ t ^ " " ^ x ^ "; " ^ 
-      string_of_sexpr se ^ ";\n" *)
 
 let string_of_sfdecl fdecl =
   string_of_typ fdecl.styp ^ " " ^ 

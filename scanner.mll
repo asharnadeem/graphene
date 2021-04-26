@@ -1,5 +1,7 @@
-(* Ocamlyacc scanner for Graphene 
-  Author: Matthew Sanchez *)
+(* 
+  Ocamlyacc scanner for Graphene 
+  Author: Matthew Sanchez 
+*)
   
 { open Parser }
 
