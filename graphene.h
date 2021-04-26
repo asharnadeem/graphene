@@ -8,12 +8,14 @@ struct list_element
     struct list_element *next;
 };
 
-struct list {
+struct list
+{
     int size;
     struct list_element *head;
 };
 
-struct edge {
+struct edge
+{
     void *weight;
     struct node *dest;
     int t;

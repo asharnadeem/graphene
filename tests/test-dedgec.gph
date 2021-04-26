@@ -1,4 +1,4 @@
-int main() {
+int main(){
   node<string> a;
   node<string> b;
   a ->["5"] b;

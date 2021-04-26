@@ -1,5 +1,3 @@
-int main() {
-    //list<void> m;
-    //node<list<int>> n;
+int main(){
     graph<node<int>> g;
 }

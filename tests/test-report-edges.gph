@@ -1,0 +1,19 @@
+int main(){
+
+    node<int> m;
+    node<int> n;
+
+    m <-> n;
+    n ->[5] m;
+
+    list<edge<int>> l;
+    l = n.edges;
+    
+    edge<int> e = l[1];
+    print(e.weight);
+    
+    if(e.t == 1){
+        print("Traversable");
+    }
+    node<int> p = e.dest;
+}

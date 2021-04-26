@@ -1,4 +1,4 @@
-int main() {
+int main(){
   node<int> j;
   node<float> k;
   j.id = 9;

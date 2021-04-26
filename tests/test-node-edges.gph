@@ -1,4 +1,4 @@
-int main() {
+int main(){
     node<int> n, o, p, q;
     o.id = 0; p.id = 1; q.id = 2;
     q -> o -> p;

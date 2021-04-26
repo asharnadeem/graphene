@@ -1,4 +1,4 @@
-int main() {
+int main(){
   node <int> a;
   node <int> b;
   a <-> b;

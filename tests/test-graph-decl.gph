@@ -1,5 +1,4 @@
-int main()
-{
+int main(){
     list<int> l;
     graph<int> g;
     node<int> n;

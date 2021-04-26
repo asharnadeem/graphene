@@ -1,0 +1,16 @@
+int main(){
+
+    graph<int> g;
+
+    node<int> m, n, o;
+    g.add_node(m);
+    g.add_node(n);
+    g.add_node(o);
+    g.add(4, 5);
+
+    if(g.contains(m)){
+        if(g.contains_id(4)){
+            print("Success");
+        }
+    }
+}
