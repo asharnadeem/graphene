@@ -342,13 +342,24 @@ void printbig(int c)
 //     struct node *n = node_init();
 //     n->id = 10;
 //     n->val = malloc(sizeof(int));
+//     *(int *)n->val = 20;
 //     struct node *m = node_init();
 //     m->id = 0;
 //     m->val = malloc(sizeof(int));
 //     graph_add_node(g, n);
 //     graph_add_node(g, m);
+//     list_push_back(n->edges,edge_init(26, m, 1));
+//     list_push_back(m->edges,edge_init(2, n, 1));
+
+//     int i= 0 ;
+//     i++;
+//     i++;
+//     i++;
+//     i++;
+//    // print(g.nodes[0].edges[0].to.val);
 //     struct list *l = g->nodes;
-//     printf("%d\n", ((struct node *)(list_index(l, 1)))->id);
+//     printf("%d\n", ((struct edge*)list_index(((struct node *)(list_index(l, 0)))->edges, 0))->weight);
+    // printf("%d\n", *(int *)((((struct edge *)list_index( ((struct node *)(list_index(l, 0)))->edges, 0))->node)->val) );
 
 
 //  }

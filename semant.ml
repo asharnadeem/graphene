@@ -145,8 +145,9 @@ let check (globals, functions) =
           let ty = match o with
             Add | Sub | Mul | Div | Mod when same && t1 = Int -> Int
           | Add | Sub | Mul | Div | Mod when same && t1 = Float -> Float
-          | Eq  when same -> (match t1 with 
-              Int | Float | Node(_) | Edge(_) | List(_) | Graph (_) -> Int
+          | Eq | Neq  when same -> (match t1 with 
+              Int | Float | String |
+              Node(_) | Edge(_) | List(_) | Graph (_) -> Int
             | _ -> raise (Failure "error: illegal comparison"))
           | Less | Leq | Greater | Geq
                      when same && (t1 = Int || t1 = Float) -> Int

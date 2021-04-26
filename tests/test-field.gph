@@ -9,6 +9,12 @@ int main() {
     n <->[30] m;
     g.add_node(n);
     g.add_node(m);
+
+   // print(m.edges[0].to);
+    list<node<int>> ll;
+    ll.push_back(n);
+ 
+    //print(ll[0]);
     print(g.nodes[0].edges[0].to.val);
     print(n.edges[0].to.val);
     print(g.nodes[1].edges[0].to.val);

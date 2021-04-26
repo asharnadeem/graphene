@@ -312,9 +312,8 @@ let translate (globals, functions) =
           L.build_load cast "val" builder
           | _ ->  let ptr = L.build_call list_index_f 
             [|expr builder s; expr builder e |] "list_index" builder
-            and ty =  (L.pointer_type (ltype_of_typ t)) in
-            let cast = L.build_bitcast ptr ty "cast" builder in
-            L.build_load cast "val" builder)
+            and ty =  (ltype_of_typ t) in
+             L.build_bitcast ptr ty "cast" builder)
         | A.Graph(_)-> 
           L.build_call graph_get_node_f 
           [| expr builder s; expr builder e |] "graph_get_node" builder
@@ -491,55 +490,101 @@ let translate (globals, functions) =
             [| n2ell; cast2|] "edge_push" builder);
         expr builder n1
       | SPushBack(s, e) -> (match (s, e) with 
-           ((A.List(t), l), _) -> (let e' = expr builder e in
+           ((A.List(t), l), _) -> let e' = expr builder e in
+           (match t with 
+              A.Int | A.Float ->
         let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
         ignore (L.build_store e' ptr builder); 
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
           ignore (L.build_call list_push_back_f 
-          [| expr builder (A.List(t), l); cast|] "list_push_back" builder);
-          expr builder (A.List(t),l) )
-          | _ -> raise (Failure ("internal error on pushback")) )
+          [| expr builder s; cast|] "list_push_back" builder);
+          expr builder (A.List(t),l) 
+            | _ -> let cast = L.build_bitcast e' void_ptr_t "cast" builder in
+          ignore (L.build_call list_push_back_f 
+          [| expr builder s; cast|] "list_push_back" builder);
+          expr builder s)          
+            
+          | _ -> raise (Failure ("internal error on pushback"))  )
       | SPushFront(s, e) -> (match (s, e) with 
-           ((A.List(t), l), _) -> (let e' = expr builder e in
+           ((A.List(t), l), _) -> let e' = expr builder e in
+           (match t with 
+              A.Int | A.Float ->
         let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
         ignore (L.build_store e' ptr builder); 
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
           ignore (L.build_call list_push_front_f 
-          [| expr builder (A.List(t), l); cast|] "list_push_front" builder);
-          expr builder (A.List(t),l) )
-          | _ -> raise (Failure ("internal error on push_front")) )
+          [| expr builder s; cast|] "list_push_front" builder);
+          expr builder (A.List(t),l) 
+            | _ -> let cast = L.build_bitcast e' void_ptr_t "cast" builder in
+          ignore (L.build_call list_push_front_f 
+          [| expr builder s; cast|] "list_push_front" builder);
+          expr builder s)          
+            
+          | _ -> raise (Failure ("internal error on pushback"))  )
       | SPopBack(s) -> (match s with
-            (A.List(t), l)  -> (let ptr = (L.build_call list_pop_back_f 
-          [| expr builder (A.List(t), l) |] "list_pop_back" builder)
-          and ty = (L.pointer_type (ltype_of_typ t)) in 
-             
-          let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder)
-          | _ -> raise (Failure "internal error on pop_back"))
+            (A.List(t), _)  ->
+           (match t with 
+              A.Int | A.Float -> 
+              (let ptr = (L.build_call list_pop_back_f 
+            [| expr builder s|] "list_pop_back" builder)
+            and ty = (L.pointer_type (ltype_of_typ t)) in         
+            let cast = L.build_bitcast ptr ty "cast" builder in 
+            L.build_load cast "val" builder)
+
+            | _ ->  (let ptr = (L.build_call list_pop_back_f 
+            [| expr builder s |] "list_pop_back" builder)
+            and ty = (ltype_of_typ t) in 
+            L.build_bitcast ptr ty "cast" builder)
+            )
+          | _ -> raise (Failure "internal error on pop_back") )
       | SPopFront(s) -> (match s with
-            (A.List(t), l)  -> (let ptr = (L.build_call list_pop_front_f 
-          [| expr builder (A.List(t), l) |] "list_pop_front" builder)
-          and ty = (L.pointer_type (ltype_of_typ t)) in 
-             
-          let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder)
-          | _ -> raise (Failure "internal error on pop_front"))
+            (A.List(t), _)  ->
+           (match t with 
+              A.Int | A.Float -> 
+              (let ptr = (L.build_call list_pop_front_f 
+            [| expr builder s|] "list_pop_front" builder)
+            and ty = (L.pointer_type (ltype_of_typ t)) in         
+            let cast = L.build_bitcast ptr ty "cast" builder in 
+            L.build_load cast "val" builder)
+
+            | _ ->  (let ptr = (L.build_call list_pop_front_f 
+            [| expr builder s |] "list_pop_front" builder)
+            and ty = (ltype_of_typ t) in 
+            L.build_bitcast ptr ty "cast" builder)
+            )
+          | _ -> raise (Failure "internal error on pop_back") )
       | SPeekBack(s) -> (match s with
-            (A.List(t), l)  -> (let ptr = (L.build_call list_peek_back_f 
-          [| expr builder (A.List(t), l) |] "list_peek_back" builder)
-          and ty = (L.pointer_type (ltype_of_typ t)) in 
-             
-          let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder)
-          | _ -> raise (Failure "internal error on peek_back"))
+            (A.List(t), _)  ->
+           (match t with 
+              A.Int | A.Float  -> 
+              (let ptr = (L.build_call list_peek_back_f 
+            [| expr builder s|] "list_peek_back" builder)
+            and ty = (L.pointer_type (ltype_of_typ t)) in         
+            let cast = L.build_bitcast ptr ty "cast" builder in 
+            L.build_load cast "val" builder)
+
+            | _ ->  (let ptr = (L.build_call list_peek_back_f 
+            [| expr builder s |] "list_peek_back" builder)
+            and ty = (ltype_of_typ t) in 
+            L.build_bitcast ptr ty "cast" builder)
+            )
+          | _ -> raise (Failure "internal error on peek_front") )
       | SPeekFront(s) -> (match s with
-            (A.List(t), l)  -> (let ptr = (L.build_call list_peek_front_f 
-          [| expr builder (A.List(t), l) |] "list_peek_front" builder)
-          and ty = (L.pointer_type (ltype_of_typ t)) in 
-             
-          let cast = L.build_bitcast ptr ty "cast" builder in 
-        L.build_load cast "val" builder)
-          | _ -> raise (Failure "internal error on peek_front"))
+            (A.List(t), _)  ->
+           (match t with 
+              A.Int | A.Float -> 
+              (let ptr = (L.build_call list_peek_front_f 
+            [| expr builder s|] "list_peek_front" builder)
+            and ty = (L.pointer_type (ltype_of_typ t)) in         
+            let cast = L.build_bitcast ptr ty "cast" builder in 
+            L.build_load cast "val" builder)
+
+            | _ ->  (let ptr = (L.build_call list_peek_front_f 
+            [| expr builder s |] "list_peek_front" builder)
+            and ty = (ltype_of_typ t) in 
+            L.build_bitcast ptr ty "cast" builder)
+            )
+          | _ -> raise (Failure "internal error on peek_front") )
       | SAddNode(g, e) ->  L.build_call graph_add_node_f 
           [| expr builder g; expr builder e|] "graph_add_node" builder
       | SGAdd(g, id, v) -> (match g with
@@ -555,7 +600,8 @@ let translate (globals, functions) =
       | SContainsId(g, id) -> L.build_call graph_contains_id_f  
           [|expr builder g; expr builder id|] "graph_contains_id" builder
       | SAddAll(s, el) -> let s' = expr builder s in (match s with 
-          (A.List(t),_) -> let addfun e = ( 
+          (A.List(t),_) -> (match t with
+              A.Int | A.Float -> let addfun e = ( 
           let e' = expr builder e in
           let ptr = L.build_malloc (ltype_of_typ t) "element" builder in
           ignore (L.build_store e' ptr builder); 
@@ -564,9 +610,17 @@ let translate (globals, functions) =
           [| s'; cast|] "list_push_back" builder)) in
           List.iter addfun el;
           s'
+            | _ ->  let addfun e = ( 
+          let e' = expr builder e in
+          let cast = L.build_bitcast e' void_ptr_t "cast" builder in
+          ignore(L.build_call list_push_back_f 
+          [| s'; cast|] "list_push_back" builder)) in
+          List.iter addfun el;
+          s')
         | _ -> raise (Failure "internal error on addall"))
       in
       
+
     (* LLVM insists each basic block end with exactly one "terminator" 
        instruction that transfers control.  This function runs "instr builder"
        if the current block does not already have a terminator.  Used,
