@@ -6,12 +6,14 @@ struct list_element
     struct list_element *next;
 };
 
-struct list {
+struct list 
+{
     int size;
     struct list_element *head;
 };
 
-struct edge {
+struct edge 
+{
     void *weight;
     struct node *dest;
     int t;
@@ -25,8 +27,7 @@ struct node
 };
 
 struct graph
-{   // struct list size makes this redundant
-    // int size;
+{   
     struct list *nodes;
     struct node *root;
 };
