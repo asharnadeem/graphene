@@ -1,6 +1,6 @@
 all : clean graphene.native graphene.o graphene.bc
 
-test : testall.sh
+test : test-clean testall.sh
 	./testall.sh
 	rm -rf testall.log test-* fail-*
 
@@ -19,4 +19,4 @@ graphene.bc : graphene.c
 
 clean :
 	ocamlbuild -clean
-	rm -rf testall.log ocamlllvm *.diff graphene.o test-* fail-* graphene.bc
+	rm -rf testall.log ocamlllvm *.diff graphene.o test-* fail-* graphene.bc program.exe
