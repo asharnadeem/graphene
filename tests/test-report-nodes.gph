@@ -1,0 +1,9 @@
+int main()
+{
+    node<string> m;
+    m.id = 1;
+    m.val = "Terminal";
+
+    print(m.id);
+    print(m.val);
+}
