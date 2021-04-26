@@ -1,4 +1,4 @@
-int main() {
+int main(){
   node<float> j;
   j.val = 0.1;
   print(j.val);

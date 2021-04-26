@@ -1,4 +1,4 @@
-int main() {
+int main(){
   node<int> j;
   j.val = 1;
   print(j.val);

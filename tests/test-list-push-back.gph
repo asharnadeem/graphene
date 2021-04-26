@@ -1,12 +1,7 @@
 int main(){
-    
     list<int> l;
-    
     l.push_back(1);
     l.push_back(2);
-    
     print(l[0]);
     print(l[1]);
-    
-    return 0;
 }

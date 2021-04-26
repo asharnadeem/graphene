@@ -1,4 +1,4 @@
-int main() {
+int main(){
     graph<int> g;
     g.add(0, 2);
     g.add(1, 3);

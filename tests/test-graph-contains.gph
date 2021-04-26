@@ -1,4 +1,4 @@
-int main() {
+int main(){
     graph<float> g;
     node<float> n;
     n.id = 6;

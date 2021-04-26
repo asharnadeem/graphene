@@ -1,5 +1,4 @@
 int main(){
-
     int a = 5 * 20;
     print(a);
     return 0;  

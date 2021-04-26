@@ -1,4 +1,4 @@
-int main() {
+int main(){
     list<string> l;
     l.push_back("a");
     l.push_back("b");

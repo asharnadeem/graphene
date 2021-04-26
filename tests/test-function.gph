@@ -1,11 +1,11 @@
-int inc(int j) {
+int inc(int j){
     print(j);
     return j+1;
 }
 
-int main() {
+int main(){
     int j = 0;
-    while(j < 10) {
+    while(j < 10){
         j = inc(j);
     }
     return 0;
