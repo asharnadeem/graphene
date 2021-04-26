@@ -20,9 +20,9 @@
 %type <Ast.program> program
 
 %nonassoc NOELSE
-%nonassoc ELSE
-%right DIREDGE UNDIREDGE TILDE DGT DEDGE UEDGE DEDGEP UEDGE
+%nonassoc ELSE 
 %right ASSIGN LSQUARE RSQUARE
+%right DEDGE UEDGE 
 %left OR
 %left AND
 %left EQ NEQ
@@ -31,6 +31,7 @@
 %left TIMES DIVIDE MOD
 %right NOT
 %right DOT
+
 %%
 
 program:
@@ -128,6 +129,7 @@ expr:
   /* list[3] */
   | expr LSQUARE expr RSQUARE { Index($1, $3) }
   | ID LPAREN args_opt RPAREN { Call($1, $3) }
+  /* built-in "functions" */
   | PRINT LPAREN expr RPAREN { Print($3) }
   | expr DOT ID LPAREN args_opt RPAREN { Call( $3, $1 :: $5 ) }
   | expr DOT PUSHBACK LPAREN expr RPAREN { PushBack($1, $5) }

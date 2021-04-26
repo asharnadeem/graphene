@@ -1,0 +1,11 @@
+int main() {
+    string s = "test";
+    if(("test" == s) && (s != "tess")) {
+        print(s);
+        print("passed");
+    }
+    if("tests" == s) {
+        print("not");
+    }
+    return 0;
+}

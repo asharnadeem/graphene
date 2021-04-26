@@ -1,3 +1,6 @@
+(* Generates LLVM IR from graphene input code (in the form of sast)
+  Authors: Matthew Sanchez & Ashar Nadeem *)
+
 module L = Llvm
 module A = Ast
 open Sast
@@ -5,10 +8,6 @@ open Sast
 module StringMap = Map.Make(String)
 
 let get_type(t, _) = t
-
-(* TODO: enforce uniqueness of ids in graphs in C
-         handle duplicate edges (probably replace weight)
-         DONE???? *)
 
 (* translate : Sast.program -> Llvm.module *)
 let translate (globals, functions) =
@@ -65,7 +64,9 @@ let translate (globals, functions) =
     let global_var m (t, n) = 
       let init = match t with
           A.Float -> L.const_float (ltype_of_typ t) 0.0
-        | _ -> L.const_int (ltype_of_typ t) 0
+        | A.Int -> L.const_int (ltype_of_typ t) 0
+        | _ -> raise (Failure 
+          "error: this type cannot be declared globally")
       in StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
 
@@ -153,7 +154,6 @@ let translate (globals, functions) =
       L.function_type i32_t [| graph_t; i32_t |] in
   let graph_contains_id_f : L.llvalue =
       L.declare_function "graph_contains_id" graph_contains_id_t the_module in
-
 
   (* Define each function (arguments and return type) so we can 
      call it even before we've created its body *)
@@ -404,7 +404,6 @@ let translate (globals, functions) =
             | _ -> raise (Failure "internal error in accessing"))
         | _ -> raise (Failure "internal error")
           )
-          
       | SDEdge (n1, n2) -> let n1p = expr builder n1 and
                                n2p = expr builder n2 in 
         let atr = 
@@ -455,35 +454,28 @@ let translate (globals, functions) =
         | (A.Node(A.Float), _ )->  (A.Float)
         | _ -> raise (Failure "internal error"))
         in
-        (* allocate space for and store weight value *)
         let ptr = L.build_malloc (ltype_of_typ (typ)) "element" builder in
         ignore (L.build_store e' ptr builder); 
-        (* cast to void * *)
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
-        (* call edge init function, returns pointer to edge *)
          let fedgep = L.build_call edge_init_f
           [|cast; n2p; L.const_int i32_t 1 |] 
           "edge_init" builder and
             bedgep = L.build_call edge_init_f
           [|cast; n1p; L.const_int i32_t 0|] 
           "edge_init" builder in  
-          (* get edge lists for nodes *)
         let n1el = L.build_struct_gep n1p 2 "struct.ptr" builder and
             n2el = L.build_struct_gep n2p 2 "struct.ptr" builder in 
         let n1ell = L.build_load n1el "temp" builder and
             n2ell = L.build_load n2el "temp" builder in
-            (* cast edge ptrs to void * *)
         let cast1 = L.build_bitcast fedgep void_ptr_t 
             "cast" builder and
             cast2 = L.build_bitcast bedgep void_ptr_t
             "cast" builder in
-            (* push edge ptrs to node edge lists *)
         ignore (L.build_call list_push_back_f 
             [| n1ell; cast1|] "edge_push" builder);
         ignore (L.build_call list_push_back_f
             [| n2ell; cast2|] "edge_push" builder);
             expr builder n1;
-      
       | SUEdge (n1, n2) -> let n1p = expr builder n1 and
                                n2p = expr builder n2 in 
         let atr = 
@@ -496,29 +488,23 @@ let translate (globals, functions) =
             ((L.const_float float_t 0.0), A.Float)
         | _ -> raise (Failure "internal error"))
         in
-        (* allocate space for and store weight value *)
         let ptr = L.build_malloc (ltype_of_typ (snd atr)) "element" builder in
         ignore (L.build_store (fst atr) ptr builder); 
-        (* cast to void * *)
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
-        (* call edge init function, returns pointer to edge *)
          let fedgep = L.build_call edge_init_f
           [|cast; n2p; L.const_int i32_t 1 |] 
           "edge_init" builder and
             bedgep = L.build_call edge_init_f
           [|cast; n1p; L.const_int i32_t 1|] 
           "edge_init" builder in  
-          (* get edge lists for nodes *)
         let n1el = L.build_struct_gep n1p 2 "struct.ptr" builder and
             n2el = L.build_struct_gep n2p 2 "struct.ptr" builder in 
         let n1ell = L.build_load n1el "temp" builder and
             n2ell = L.build_load n2el "temp" builder in
-            (* cast edge ptrs to void * *)
         let cast1 = L.build_bitcast fedgep void_ptr_t 
             "cast" builder and
             cast2 = L.build_bitcast bedgep void_ptr_t
             "cast" builder in
-            (* push edge ptrs to node edge lists *)
         ignore (L.build_call list_push_back_f 
             [| n1ell; cast1|] "edge_push" builder);
         ignore (L.build_call list_push_back_f
@@ -534,29 +520,23 @@ let translate (globals, functions) =
         | (A.Node(A.Float), _ )->  (A.Float)
         | _ -> raise (Failure "internal error"))
         in
-        (* allocate space for and store weight value *)
         let ptr = L.build_malloc (ltype_of_typ (typ)) "element" builder in
         ignore (L.build_store e' ptr builder); 
-        (* cast to void * *)
         let cast = L.build_bitcast ptr void_ptr_t "cast" builder in
-        (* call edge init function, returns pointer to edge *)
          let fedgep = L.build_call edge_init_f
           [|cast; n2p; L.const_int i32_t 1 |] 
           "edge_init" builder and
             bedgep = L.build_call edge_init_f
           [|cast; n1p; L.const_int i32_t 1|] 
           "edge_init" builder in  
-          (* get edge lists for nodes *)
         let n1el = L.build_struct_gep n1p 2 "struct.ptr" builder and
             n2el = L.build_struct_gep n2p 2 "struct.ptr" builder in 
         let n1ell = L.build_load n1el "temp" builder and
             n2ell = L.build_load n2el "temp" builder in
-            (* cast edge ptrs to void * *)
         let cast1 = L.build_bitcast fedgep void_ptr_t 
             "cast" builder and
             cast2 = L.build_bitcast bedgep void_ptr_t
             "cast" builder in
-            (* push edge ptrs to node edge lists *)
         ignore (L.build_call list_push_back_f 
             [| n1ell; cast1|] "edge_push" builder);
         ignore (L.build_call list_push_back_f
@@ -709,7 +689,7 @@ let translate (globals, functions) =
           [| l; cast|] "list_push_back" builder)) in
           List.iter addfun el;
           s')
-        | _ -> raise (Failure "internal error on addall"))
+        | _ -> raise (Failure "internal error on add_all"))
       in
       
 
@@ -801,7 +781,6 @@ let translate (globals, functions) =
              let cast = L.build_bitcast mptr void_ptr_t "cast" builder in 
             ignore (L.build_store cast val_ptr builder)) ln ; builder 
         | SDeclare(_, _, a) -> ignore(expr builder a); builder
-        | SContinue | SBreak -> raise (Failure ("error: continue/break"))
         
       in
   

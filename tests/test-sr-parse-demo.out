@@ -1,0 +1,73 @@
+top of stack:
+state: 
+0
+next input:
+x
+R3
+
+top of stack:
+B
+state: 
+1
+next input:
+x
+shift
+
+top of stack:
+x
+state: 
+4
+next input:
+z
+shift
+
+top of stack:
+z
+state: 
+3
+next input:
+x
+R4
+
+top of stack:
+B
+state: 
+1
+next input:
+x
+shift
+
+top of stack:
+x
+state: 
+4
+next input:
+y
+shift
+
+top of stack:
+y
+state: 
+2
+next input:
+$
+R2
+
+top of stack:
+A
+state: 
+5
+next input:
+$
+R1
+
+top of stack:
+A
+state: 
+5
+next input:
+$
+R1
+
+ACCEPT
+id: 6, val: $, edges: 1

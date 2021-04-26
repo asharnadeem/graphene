@@ -1,0 +1,156 @@
+int main() {
+    //g is the LR(0) automaton
+    graph<string> g;
+    //create the states
+    g = init(g);
+    
+    list<string> input, stack;
+    list<int> states;
+    node<string> state;
+
+    //input tokens
+    input.add_all("x", "z", "x", "y", "$");
+
+    state = g[0];
+    states.push_front(state.id);
+    while(state.id != 6) {
+        state = action(g, state, stack, states, input);
+    }
+    print("ACCEPT");
+    print(state);
+
+}
+
+//performs the next step in SR parsing given a valid automaton and grammar
+node<string> action(graph<string> g, node<string> state, list<string> stack, 
+            list<int> states, list<string> input) {
+
+    print("top of stack:");
+    if(stack.size) {
+        print(stack.peek_front());
+    }
+    
+    print("state: ");
+    print(state.id);
+
+    print("next input:");
+    print(input.peek_front());
+
+    string s = input.peek_front();
+    string res;
+
+    if(s == state.val) {
+
+        stack.push_front(reduce(stack, states));
+        state = g[states.peek_front()];
+        state = traverse(state, stack.peek_front());
+        states.push_front(state.id);
+    }
+    else {  
+        print("shift");
+        state = traverse(state, input.peek_front());
+        stack.push_front(input.pop_front());
+        states.push_front(state.id);
+
+    }
+    print("");
+    return state;
+}
+
+//generalized traversal
+node<string> traverse(node<string> n, string val) {
+    int i = 0;
+    while(i < n.edges.size) {
+        if(n.edges[i].t) {
+            if(n.edges[i].weight == val) {
+                return n.edges[i].dest;
+            }
+        }
+        i = i + 1;
+    }
+    //segfault
+    print("invalid transition, REJECT");
+    return n.edges[i].dest;
+}
+
+//encoding of LR(0) automaton
+graph<string> init(graph<string> g) {
+    g.add(0, "x");
+    g.add(1, "NONE");
+    g.add(2, "$");
+    g.add(3, "x");
+    g.add(4, "x");
+    g.add(5, "$");
+    g.add(6, "$");
+    
+    //create transitions
+    g[0] ->["A"] g[6]; 
+    g[0] ->["B"] g[1] ->["x"] g[4];
+    g[0] ->["y"] g[2];
+    g[0] ->["z"] g[3];
+
+
+    g[4] ->["B"] g[1];
+    g[4] ->["y"] g[2]; 
+    g[4] ->["z"] g[3];
+    g[4] ->["A"] g[5];
+    return g;
+}
+
+//encoding of grammar
+string reduce(list<string> stack, list<int> states) {
+    if(states.peek_front() == 6) {
+        if(stack.peek_front() == "A") {
+            stack.pop_front();
+            states.pop_front();
+            print("R0");
+            return "A'";
+        }
+    }
+    if(states.peek_front() == 5) {
+        if(stack.peek_front() == "A") {
+            stack.pop_front();
+            states.pop_front();
+        }
+        else {
+            print("reduce error, REJECT");
+            return stack[stack.size];
+        }
+        if(stack.peek_front() == "x") {
+            stack.pop_front();
+            states.pop_front();
+        }
+        else {
+            print("reduce error, REJECT");
+            return stack[stack.size];
+        }
+        if(stack.peek_front() == "B" ) {
+            stack.pop_front();
+            states.pop_front();
+            print("R1");
+            return "A";
+        }
+    }
+    if(states.peek_front() == 2) {
+        if(stack.peek_front() == "y") {
+            stack.pop_front();
+            states.pop_front();
+            print("R2");
+            return "A";
+        }
+    }
+    if(states.peek_front() == 0 || states.peek_front() == 4) {
+        print("R3");
+        return "B";
+    }
+    if(states.peek_front() == 3) {
+        if(stack.peek_front() == "z") {
+            stack.pop_front();
+            states.pop_front();
+            print("R4");
+            return "B";
+        }
+    }
+    print("reduce error, REJECT");
+    return stack[stack.size];
+}

@@ -1,4 +1,5 @@
-(* Semantic checking *)
+(* Semantic checking, produces sast from ast 
+  Author: Matthew Sanchez & Ashar Nadeem *)
 
 open Ast
 open Sast
@@ -14,6 +15,7 @@ let check_type (ex, ty) =
 	else raise (Failure ("error: "))
 
 let get_type(t, _) = t
+
 let first_element (myList) = match myList with
  [] -> Void
 | first_e1 :: _ -> get_type(first_e1)
@@ -88,10 +90,11 @@ let check (globals, functions) =
                     List.fold_left (fun l s -> (t, s)::l) locals x
                 | Declare(t, ([x] as l), _) when List.length l = 1
                     -> (t, x) :: locals
-                    (* Declare(t, x, e) -> ignore e; (t, x) :: locals *)
                 | _ -> locals) t
     in
+
     let fulldecls = globals @ func.formals @ concat_statements [] func.body 
+
     in  (List.iter (fun (t, _) -> match t with 
                   Node(it) -> (match it with
                       List(_) | Node(_) | Graph(_) | Edge(_) | Void ->
@@ -113,7 +116,23 @@ let check (globals, functions) =
                 | _ -> ())
                    fulldecls);
     (* Local symbol table for function *)
-    let symbols = List.fold_left (fun m (t, x) -> StringMap.add x t m) 
+
+    (* check for duplicate ids *)
+    let check_decls (kind : string) (binds: bind list) = 
+    List.iter (function
+        (Void, b) -> raise (Failure ("error: illegal void " ^ kind ^
+        " " ^ b))
+      | _ -> ()) binds;
+  
+    let rec dups = function
+        [] -> ()
+      | ((_,n1) :: (_,n2) :: _) when n1 = n2 -> raise(Failure 
+          ("error: variable previously declared: " ^ n1))
+      | _ :: t -> dups t
+    in dups (List.sort (fun (_,a) (_,b) -> compare a b) fulldecls)
+  in check_decls "global" globals;
+
+    let symbols = List.fold_left (fun m (t, x) -> StringMap.add x t m)
       StringMap.empty (fulldecls)
     in
 
@@ -222,7 +241,7 @@ let check (globals, functions) =
                     (Node(a), SUEdge(sn1, sn2))
           | _ -> raise (Failure ("error: UEdge fail")))
 
-     | UEdgeC(n1, e, n2) -> let sn1 = expr n1 and
+      | UEdgeC(n1, e, n2) -> let sn1 = expr n1 and
                                 sn2 = expr n2 in (match (sn1, sn2) with
             ((Node(a), _),  (Node(b), _)) when a = b -> 
                     (Node(a), SUEdgeC(sn1, expr e, sn2))
@@ -356,8 +375,6 @@ let check (globals, functions) =
       | For(e1, e2, e3, s) -> 
           SFor(expr e1, expr e2, expr e3, check_stmt s)
       | While(p, s) -> SWhile(check_bool_expr p, check_stmt s)
-      | Continue -> SContinue
-      | Break -> SBreak
       | Declare(t, x, Noexpr) -> SDeclare(t, x, (Void, SNoexpr))
       | Declare(t, l, e) as d when List.length l = 1 
           -> let (t', v) = expr e in

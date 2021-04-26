@@ -1,5 +1,6 @@
 (* Ocamlyacc scanner for Graphene 
   Author: Matthew Sanchez *)
+  
 { open Parser }
 
 let digit = ['0' - '9']

@@ -3,5 +3,6 @@ int main() {
   node<string> b;
   a ->["5"] b;
   print(a.edges[0].weight);
+  print(a.edges[0].dest);
   return 0;
 }

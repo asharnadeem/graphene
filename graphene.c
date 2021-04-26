@@ -1,5 +1,6 @@
+/* functions implementing Graphene build-in functionality
+    Author: Ashar Nadeem & Matthew Sanchez */
 #include <stdlib.h>
-#include <stdio.h>
 #include "graphene.h"
 
 /* ---------- List Functions ---------- */
@@ -115,19 +116,6 @@ void *list_peek_front(struct list *list) {
   return list->head->element;
 }
 
-int list_size(struct list *list)
-{
-    return list->size;
-}
-
-int list_empty(struct list *list)
-{
-    if(list->size == 0)
-    {
-        return 1;
-    }
-    return 0;
-}
 
 /* ---------- End List Functions ---------- */
 
@@ -142,26 +130,6 @@ struct node *node_init()
     return node;
 }
 
-// void node_set_id(struct node *node, int id)
-// {
-//     node->id = id;
-// }
-
-// void node_set_val(struct node *node, void *val)
-// {
-//     node->val = val;
-// }
-
-// int node_get_id(struct node *node)
-// {
-//     return node->id;
-// }
-
-// void node_get_val(struct node *node)
-// {
-//     return *node->val;
-// }
-
 /* ---------- End Node Functions ---------- */
 
 
@@ -169,7 +137,6 @@ struct node *node_init()
 
 struct edge *edge_init(void* w, struct node *n, int tr)
 {   
-    // printf("INIT EDGE TO ID = %d", n->id);
     struct edge *edge = malloc(sizeof(struct edge));
     edge->weight = w;
     edge->dest = n;
@@ -196,8 +163,6 @@ struct graph *graph_init()
 
 void graph_add_node(struct graph *graph, struct node *node)
 {
-    //  printf("addnode\n");
-    //  printf("adding: %d, %d", node->id, *(int  *)(node->val));
     if (graph->root == NULL)
     {
         graph->root = node;
@@ -207,7 +172,6 @@ void graph_add_node(struct graph *graph, struct node *node)
     tmp = graph->nodes->head;
     if(tmp == NULL) 
     {
-      // printf("HEAD NULL\n");
       struct list_element* newel = (struct list_element*) malloc(sizeof(struct list_element));
       newel->element = node;
       newel->next = NULL;
@@ -216,18 +180,7 @@ void graph_add_node(struct graph *graph, struct node *node)
     else {
       while (tmp->next != NULL)
       {   
-          // printf("on: %d, adding: %d\n", node->id,  ((struct node *)tmp->element)->id);
-          if(node->id == ((struct node *)tmp->element)->id) 
-          {
-            
-            // printf("graph already has node of id = %d\n", node->id);
-          }
           tmp = tmp->next;
-      }
-      // printf("on: %d, adding: %d\n", node->id, ((struct node *)tmp->element)->id );
-      if(node->id == ((struct node *)tmp->element)->id) 
-      {
-        // printf("graph already has node of id = %d\n", node->id);
       }
 
       struct list_element* newel = (struct list_element*) malloc(sizeof(struct list_element));
@@ -235,7 +188,7 @@ void graph_add_node(struct graph *graph, struct node *node)
       newel->next = NULL;
       tmp->next = newel;
     
-    // printf("added: %d, %d\n", ((struct node *) newel->element)-> id, *(int *)(((struct node *) newel->element)->val));
+
     }
     graph->nodes->size = graph->nodes->size + 1;
 }
@@ -251,32 +204,17 @@ struct node *graph_add(struct graph *graph, int id, void *val)
 
 struct node *graph_get_node(struct graph *graph, int id)
 {
-    // if (graph->head == NULL)
-    // {
-    //     return NULL;
-    // }
-    //printf("searching for node with key: %d\n", id);
-
     struct list_element *tmp;
     tmp = graph->nodes->head;
-    // if(tmp == NULL) {
-    //   return NULL;
-    // }
-    // printf("1\n");
 
     while (tmp != NULL) 
     {
-        //printf("looping, cur id = %d\n", ((struct node *) tmp->element)->id);
-        //printf("2\n");
         if(((struct node *) tmp->element)->id == id)
         {
-            //printf("NODE FOUND\n");
             return (struct node *) tmp->element;
         }
         tmp = tmp->next;
     }
-    //printf("node not found\n");
-    //printf("3\n");
     return NULL;
     
 }
@@ -316,66 +254,3 @@ int string_cmp(void *v1, void *v2) {
         return 0;
     }
 }
-void printbig(int c)
-{
-    int index = 0;
-    int col, data;
-    if (c >= '0' && c <= '9')
-        index = 8 + (c - '0') * 8;
-    else if (c >= 'A' && c <= 'Z')
-        index = 88 + (c - 'A') * 8;
-    do
-    {
-        data = font[index++];
-        for (col = 0; col < 8; data <<= 1, col++)
-        {
-            char d = data & 0x80 ? 'X' : ' ';
-            putchar(d);
-            putchar(d);
-        }
-        putchar('\n');
-    } while (index & 0x7);
-}
-
-//  int main()
-//  {
-//     struct graph *g = graph_init();
-//     struct node *n = node_init();
-//     n->id = 10;
-//     n->val = malloc(sizeof(int));
-//     *(int *)n->val = 20;
-//     struct node *m = node_init();
-//     m->id = 0;
-//     m->val = malloc(sizeof(int));
-//     graph_add_node(g, n);
-//     graph_add_node(g, m);
-//     list_push_back(n->edges,edge_init(26, m, 1));
-//     list_push_back(m->edges,edge_init(2, n, 1));
-
-//     int i= 0 ;
-//     i++;
-//     i++;
-//     i++;
-//     i++;
-//    // print(g.nodes[0].edges[0].to.val);
-//     struct list *l = g->nodes;
-//     printf("%d\n", ((struct edge*)list_index(((struct node *)(list_index(l, 0)))->edges, 0))->weight);
-    // printf("%d\n", *(int *)((((struct edge *)list_index( ((struct node *)(list_index(l, 0)))->edges, 0))->node)->val) );
-
-
-//  }
-//     int a = 1;
-//     int b = 2;
-
-//     struct list *l = malloc(sizeof(struct list));
-//     list_push_back(l, &a);
-//     list_push_back(l, &b);
-
-//     int c =  *( (int *) list_pop_back(l));
-//     int d =  *( (int *) list_pop_back(l));
-//     // int e =  *( (int *) list_pop_front(l));
-
-//     printf("%d\n", c);
-//     printf("%d\n", d);
-//     // /printf("%d\n", e);
-// }

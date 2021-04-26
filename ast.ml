@@ -68,8 +68,6 @@ type stmt =
   | For of expr * expr * expr * stmt
   (*| Foreach of typ * string * expr * stmt *)
   | While of expr * stmt
-  | Continue
-  | Break
   | Declare of typ * string list * expr
 
 type func_decl = {
@@ -169,8 +167,6 @@ let rec string_of_stmt = function
 (*  | Foreach(t, s, expr, stmt) -> 
 *)
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
-  | Continue -> "continue;"
-  | Break -> "break;"
   | Declare(t, lx, Noexpr) -> string_of_typ t ^ " " ^
     (List.fold_left (fun l s -> s ^ "; " ^ l) "" lx ) ^ "\n"
   | Declare(t, ([x] as l), e) when (List.length l) = 1 -> string_of_typ t ^ " " ^ x ^ "; " 

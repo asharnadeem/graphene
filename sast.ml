@@ -38,8 +38,6 @@ type sstmt =
   | SIf of sexpr * sstmt * sstmt
   | SFor of sexpr * sexpr * sexpr * sstmt
   | SWhile of sexpr * sstmt
-  | SContinue
-  | SBreak 
   | SDeclare of typ * string list * sexpr
   
 type sfunc_decl = {
@@ -112,8 +110,6 @@ let rec string_of_sstmt = function
       string_of_sexpr se3  ^ ") " ^ string_of_sstmt ss
   | SWhile(se, ss) -> "while (" ^ string_of_sexpr se ^ ") " ^ 
       string_of_sstmt ss
-  | SContinue -> "continue;"
-  | SBreak -> "break;"
   | SDeclare(t, lx, (_,SNoexpr)) -> string_of_typ t ^ " " ^
     (List.fold_left (fun l s  -> s ^ "; " ^ l) "" lx ) ^ "\n"
   | SDeclare(t, ([x] as l), e) when (List.length l) = 1 -> string_of_typ t ^ " " ^ x ^ "; " 
