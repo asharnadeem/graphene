@@ -1,0 +1,5 @@
+int main(){
+    
+    node<int> m;
+    m.val = "Hello";
+}

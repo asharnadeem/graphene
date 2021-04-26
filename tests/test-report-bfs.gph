@@ -1,0 +1,51 @@
+node<int> bfs(node<int> root, node<int> target){
+
+    graph<int> visited;
+    node<int> origin, destination;
+    
+    list<node<int>> queue;
+    queue.push_back(root);
+
+    int i = 0; 
+    while(queue.size > 0){
+        
+        origin = queue.pop_front();
+
+        if(origin == target){
+            print(origin);
+            return origin;
+        }
+
+        for(i = 0; i < origin.edges.size; i = i + 1){
+            if(origin.edges[i].t){
+                
+                destination = origin.edges[i].dest;
+                if(visited.contains(destination) == 0){
+                    visited.add_node(destination);
+                    queue.push_back(destination);
+                }
+            }
+        }
+    }
+    return root;
+}
+
+int main(){
+
+    node<int> m, n, o, p, q, r;
+    m.id = 1;
+    n.id = 2;
+    o.id = 3;
+    p.id = 4;
+    q.id = 5;
+    r.id = 6;
+
+    m <-> n;
+    m <-> p;
+    n <-> o;
+    n <-> p;
+    p <-> q;
+    q <-> r;
+
+    bfs(m, r);
+}
